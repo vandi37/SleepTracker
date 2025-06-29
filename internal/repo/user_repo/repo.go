@@ -128,7 +128,9 @@ func (r *Repo) Update(ctx context.Context, tx *sql.Tx, id int64, username string
 	}
 	qb.WriteString(` where id = $1`)
 	res, err := tx.ExecContext(ctx, qb.String(), args...)
-	if err != nil {
+	if err, ok := err.(*pq.Error); ok && err.Code == "23505" {
+		return UsernameTakenError(username)
+	} else if err != nil {
 		return models.Internal(err)
 	}
 	if ok, err := repo.CheckRes(res, repo.Equals(1)); err != nil {
