@@ -10,6 +10,8 @@ import (
 	"github.com/lib/pq"
 	"github.com/vandi37/SleepTracker/internal/repo"
 	"github.com/vandi37/SleepTracker/models"
+	"github.com/vandi37/SleepTracker/pkg/logger"
+	"go.uber.org/zap"
 )
 
 type Repo struct{}
@@ -33,15 +35,33 @@ func (r *Repo) Create(ctx context.Context, tx *sql.Tx, username string, nickname
 	if err, ok := err.(*pq.Error); ok && err.Code == "23505" {
 		return 0, UsernameTakenError(username)
 	} else if err != nil {
+		logger.Error(ctx, "got an internal error while inserting a new user",
+			zap.Error(err),
+			zap.String("username", username),
+			zap.String("nickname", nickname),
+			zap.String("birth", birth.Format(time.DateOnly)),
+		)
 		return 0, models.Internal(err)
 	}
 	defer rows.Close()
 	if !rows.Next() {
+		logger.Error(ctx, "got no rows after inserting a new user",
+			zap.Error(err),
+			zap.String("username", username),
+			zap.String("nickname", nickname),
+			zap.String("birth", birth.Format(time.DateOnly)),
+		)
 		return 0, models.Internal(repo.NoRows)
 	}
 	var id int64
 
 	if err = rows.Scan(&id); err != nil {
+		logger.Error(ctx, "got an internal error while scanning id of a new user", zap.Error(err),
+			zap.Error(err),
+			zap.String("username", username),
+			zap.String("nickname", nickname),
+			zap.String("birth", birth.Format(time.DateOnly)),
+		)
 		return 0, models.Internal(repo.ErrScanning(err))
 	}
 	return id, nil
@@ -51,10 +71,12 @@ func (r *Repo) Create(ctx context.Context, tx *sql.Tx, username string, nickname
 func (r *Repo) Delete(ctx context.Context, tx *sql.Tx, id int64) models.Error {
 	res, err := tx.ExecContext(ctx, `delete from users where id = $1`, id)
 	if err != nil {
+		logger.Error(ctx, "got an internal error while deleting user", zap.Error(err), zap.Int64("id", id))
 		return models.Internal(err)
 	}
 
 	if ok, err := repo.CheckRes(res, repo.Equals(1)); err != nil {
+		logger.Error(ctx, "got an internal error while checking result of deleting user", zap.Error(err), zap.Int64("id", id))
 		return models.Internal(err)
 	} else if !ok {
 		return UserNotFound(id)
@@ -67,6 +89,7 @@ func (r *Repo) Get(ctx context.Context, tx *sql.Tx, id int64) (models.User, mode
 	rows, err := tx.QueryContext(ctx, `select id, username, nickname, birth, created_at from users where id = $1`, id)
 	var user models.User
 	if err != nil {
+		logger.Error(ctx, "got an internal error while getting user", zap.Error(err), zap.Int64("id", id))
 		return user, models.Internal(err)
 	}
 	defer rows.Close()
@@ -74,6 +97,7 @@ func (r *Repo) Get(ctx context.Context, tx *sql.Tx, id int64) (models.User, mode
 		return user, UserNotFound(id)
 	}
 	if err := rows.Scan(&user.ID, &user.Username, &user.Nickname, &user.Birth, &user.CreatedAt); err != nil {
+		logger.Error(ctx, "got an internal error while scanning user", zap.Error(err), zap.Int64("id", id))
 		return user, models.Internal(repo.ErrScanning(err))
 	}
 	return user, nil
@@ -85,6 +109,7 @@ func (r *Repo) GetWithPassword(ctx context.Context, tx *sql.Tx, username string,
 		from users where username = $1 and password_hash = $2`, username, password)
 	var user models.User
 	if err != nil {
+		logger.Error(ctx, "got an internal error while getting user", zap.Error(err), zap.String("username", username))
 		return user, models.Internal(err)
 	}
 	defer rows.Close()
@@ -92,6 +117,7 @@ func (r *Repo) GetWithPassword(ctx context.Context, tx *sql.Tx, username string,
 		return user, InvalidCredentials{}
 	}
 	if err := rows.Scan(&user.ID, &user.Username, &user.Nickname, &user.Birth, &user.CreatedAt); err != nil {
+		logger.Error(ctx, "got an internal error while scanning user", zap.String("username", username))
 		return user, models.Internal(repo.ErrScanning(err))
 	}
 	return user, nil
@@ -131,9 +157,23 @@ func (r *Repo) Update(ctx context.Context, tx *sql.Tx, id int64, username string
 	if err, ok := err.(*pq.Error); ok && err.Code == "23505" {
 		return UsernameTakenError(username)
 	} else if err != nil {
+		logger.Error(ctx, "got an internal error while updating user",
+			zap.Error(err),
+			zap.Int64("id", id),
+			zap.String("username", username),
+			zap.String("nickname", nickname),
+			zap.String("birth", birth.Format(time.DateOnly)),
+		)
 		return models.Internal(err)
 	}
 	if ok, err := repo.CheckRes(res, repo.Equals(1)); err != nil {
+		logger.Error(ctx, "got an internal error while checking result of updating user",
+			zap.Error(err),
+			zap.Int64("id", id),
+			zap.String("username", username),
+			zap.String("nickname", nickname),
+			zap.String("birth", birth.Format(time.DateOnly)),
+		)
 		return models.Internal(err)
 	} else if !ok {
 		return UserNotFound(id)
@@ -145,9 +185,11 @@ func (r *Repo) Update(ctx context.Context, tx *sql.Tx, id int64, username string
 func (r *Repo) UpdatePassword(ctx context.Context, tx *sql.Tx, id int64, password []byte) models.Error {
 	res, err := tx.ExecContext(ctx, `update users set password_hash = $2 where id = $1`, id, password)
 	if err != nil {
+		logger.Error(ctx, "got an internal error while updating user password", zap.Error(err), zap.Int64("id", id))
 		return models.Internal(err)
 	}
 	if ok, err := repo.CheckRes(res, repo.Equals(1)); err != nil {
+		logger.Error(ctx, "got an internal error while checking result of updating user", zap.Error(err), zap.Int64("id", id))
 		return models.Internal(err)
 	} else if !ok {
 		return UserNotFound(id)

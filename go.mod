@@ -6,13 +6,12 @@ require (
 	github.com/gin-gonic/gin v1.10.1
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/goloop/env v1.2.1
+	github.com/lib/pq v1.10.9
 	github.com/stretchr/testify v1.10.0
+	go.uber.org/zap v1.27.0
 )
 
-require (
-	github.com/kr/text v0.2.0 // indirect
-	github.com/lib/pq v1.10.9 // indirect
-)
+require go.uber.org/multierr v1.10.0 // indirect
 
 require (
 	github.com/bytedance/sonic v1.13.3 // indirect

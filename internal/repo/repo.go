@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/vandi37/SleepTracker/models"
+	"go.uber.org/zap"
 )
 
 type User interface {
@@ -16,3 +17,5 @@ type User interface {
 	GetWithPassword(ctx context.Context, tx *sql.Tx, username string, password []byte) (models.User, models.Error)
 	Delete(ctx context.Context, tx *sql.Tx, id int64) models.Error
 }
+
+var RepoNamespace = zap.Namespace("repository")

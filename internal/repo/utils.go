@@ -1,6 +1,8 @@
 package repo
 
-import "database/sql"
+import (
+	"database/sql"
+)
 
 func CheckRes(res sql.Result, check func(int64) bool) (bool, error) {
 	n, err := res.RowsAffected()
