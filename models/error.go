@@ -54,3 +54,20 @@ func (i InvalidError[T]) JsonError() JsonError {
 func Invalid[T any](field string, value T) InvalidError[T] {
 	return InvalidError[T]{field, value}
 }
+
+type NotAllowed struct {
+	User, Id int64
+	Thing    string
+}
+
+func (f NotAllowed) Error() string {
+	return fmt.Sprintf("user %x is not allowed to %s %x", f.User, f.Thing, f.Id)
+}
+func (NotAllowed) Code() int { return http.StatusForbidden }
+func (f NotAllowed) JsonError() JsonError {
+	return JsonError{
+		Code:    http.StatusForbidden,
+		Message: fmt.Sprintf("user is not allowed to %s", f.Thing),
+		Context: map[string]any{"id": f.Id, "user_id": f.User},
+	}
+}

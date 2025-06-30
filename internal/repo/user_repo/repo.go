@@ -33,16 +33,11 @@ func (r *Repo) Create(ctx context.Context, tx *sql.Tx, username string, nickname
 		password,
 		birth,
 	).Scan(&id)
-	if err == sql.ErrNoRows {
-		logger.Error(ctx, "got no rows after inserting a new user",
-			zap.String("username", username),
-			zap.String("nickname", nickname),
-		)
-		return 0, models.Internal(repo.NoRows)
-	} else if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == "23505" {
+	if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == "23505" {
 		return 0, UsernameTakenError(username)
 	} else if err != nil {
 		logger.Error(ctx, "got an internal error while inserting a new user",
+			repo.Namespace,
 			zap.Error(err),
 			zap.String("username", username),
 			zap.String("nickname", nickname),
@@ -56,12 +51,12 @@ func (r *Repo) Create(ctx context.Context, tx *sql.Tx, username string, nickname
 func (r *Repo) Delete(ctx context.Context, tx *sql.Tx, id int64) models.Error {
 	res, err := tx.ExecContext(ctx, `delete from users where id = $1`, id)
 	if err != nil {
-		logger.Error(ctx, "got an internal error while deleting user", zap.Error(err), zap.Int64("id", id))
+		logger.Error(ctx, "got an internal error while deleting user", repo.Namespace, zap.Error(err), zap.Int64("id", id))
 		return models.Internal(err)
 	}
 
 	if ok, err := repo.CheckRes(res, repo.Equals(1)); err != nil {
-		logger.Error(ctx, "got an internal error while checking result of deleting user", zap.Error(err), zap.Int64("id", id))
+		logger.Error(ctx, "got an internal error while checking result of deleting user", repo.Namespace, zap.Error(err), zap.Int64("id", id))
 		return models.Internal(err)
 	} else if !ok {
 		return UserNotFound(id)
@@ -78,7 +73,7 @@ func (r *Repo) Get(ctx context.Context, tx *sql.Tx, id int64) (models.User, mode
 		return user, UserNotFound(id)
 	}
 	if err != nil {
-		logger.Error(ctx, "got an internal error while getting user", zap.Error(err), zap.Int64("id", id))
+		logger.Error(ctx, "got an internal error while getting user", repo.Namespace, zap.Error(err), zap.Int64("id", id))
 		return user, models.Internal(err)
 	}
 	return user, nil
@@ -93,7 +88,7 @@ func (r *Repo) GetWithPassword(ctx context.Context, tx *sql.Tx, username string,
 		return user, InvalidCredentials{}
 	}
 	if err != nil {
-		logger.Error(ctx, "got an internal error while getting user", zap.Error(err), zap.String("username", username))
+		logger.Error(ctx, "got an internal error while getting user", repo.Namespace, zap.Error(err), zap.String("username", username))
 		return user, models.Internal(err)
 	}
 	return user, nil
@@ -134,6 +129,7 @@ func (r *Repo) Update(ctx context.Context, tx *sql.Tx, id int64, username string
 		return UsernameTakenError(username)
 	} else if err != nil {
 		logger.Error(ctx, "got an internal error while updating user",
+			repo.Namespace,
 			zap.Error(err),
 			zap.Int64("id", id),
 			zap.String("username", username),
@@ -143,6 +139,7 @@ func (r *Repo) Update(ctx context.Context, tx *sql.Tx, id int64, username string
 	}
 	if ok, err := repo.CheckRes(res, repo.Equals(1)); err != nil {
 		logger.Error(ctx, "got an internal error while checking result of updating user",
+			repo.Namespace,
 			zap.Error(err),
 			zap.Int64("id", id),
 			zap.String("username", username),
@@ -159,11 +156,11 @@ func (r *Repo) Update(ctx context.Context, tx *sql.Tx, id int64, username string
 func (r *Repo) UpdatePassword(ctx context.Context, tx *sql.Tx, id int64, password []byte) models.Error {
 	res, err := tx.ExecContext(ctx, `update users set password_hash = $2 where id = $1`, id, password)
 	if err != nil {
-		logger.Error(ctx, "got an internal error while updating user password", zap.Error(err), zap.Int64("id", id))
+		logger.Error(ctx, "got an internal error while updating user password", repo.Namespace, zap.Error(err), zap.Int64("id", id))
 		return models.Internal(err)
 	}
 	if ok, err := repo.CheckRes(res, repo.Equals(1)); err != nil {
-		logger.Error(ctx, "got an internal error while checking result of updating user", zap.Error(err), zap.Int64("id", id))
+		logger.Error(ctx, "got an internal error while checking result of updating user", repo.Namespace, zap.Error(err), zap.Int64("id", id))
 		return models.Internal(err)
 	} else if !ok {
 		return UserNotFound(id)

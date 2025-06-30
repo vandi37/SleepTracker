@@ -66,16 +66,3 @@ func (f FriendshipAlreadyAccepted) JsonError() models.JsonError {
 	}
 }
 
-type NotAllowed struct{ by, id int64 }
-
-func (f NotAllowed) Error() string {
-	return fmt.Sprintf("user %x is not allowed to accept friendship request %x", f.by, f.id)
-}
-func (NotAllowed) Code() int { return http.StatusForbidden }
-func (f NotAllowed) JsonError() models.JsonError {
-	return models.JsonError{
-		Code:    http.StatusForbidden,
-		Message: "user is not allowed to accept friendship request",
-		Context: map[string]any{"id": f.id, "user2_id": f.by},
-	}
-}

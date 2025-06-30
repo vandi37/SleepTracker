@@ -35,6 +35,11 @@ type (
 		EnterDate time.Time `json:"enter_date"`
 		CreatedAt time.Time `json:"created_at"`
 	}
+	SleepScore struct {
+		// 0-100
+		Score     int8      `json:"score"`
+		EnterDate time.Time `json:"enter_date"`
+	}
 )
 
 func ValidUsername(u string) bool {
@@ -50,7 +55,7 @@ func ValidSleepWake(sleep, wake NullInt16) bool {
 	}
 	return false
 }
-func ValidTime(time int64) bool {
+func ValidTime(time int16) bool {
 	return time >= 0 && time < 1440
 }
 

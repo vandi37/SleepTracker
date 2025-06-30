@@ -19,10 +19,18 @@ type User interface {
 }
 
 type Friend interface {
-	Request(ctx context.Context, tx *sql.Tx, from, to int64) (int64, models.Error)
-	Accept(ctx context.Context, tx *sql.Tx, id, by int64) models.Error
-	Delete(ctx context.Context, tx *sql.Tx, id, by int64) models.Error
-	Get(ctx context.Context, tx *sql.Tx, user int64) ([]models.Friend, models.Error)
+	Request(ctx context.Context, tx *sql.Tx, user1_id, user2_id int64) (int64, models.Error)
+	Accept(ctx context.Context, tx *sql.Tx, id, user2_id int64) models.Error
+	Delete(ctx context.Context, tx *sql.Tx, id, user2_id int64) models.Error
+	Get(ctx context.Context, tx *sql.Tx, user_id int64) ([]models.Friend, models.Error)
 }
 
-var RepoNamespace = zap.Namespace("repository")
+type Sleep interface {
+	Enter(ctx context.Context, tx *sql.Tx, user_id int64, sleep_time, wake_time models.NullInt16, score int16) (int64, models.Error)
+	Update(ctx context.Context, tx *sql.Tx, id int64, user_id int64, sleep_time, wake_time models.NullInt16, score int16) models.Error
+	Week(ctx context.Context, tx *sql.Tx, user_id int64, page int) ([]models.Sleep, models.Error)
+	Year(ctx context.Context, tx *sql.Tx, user_id int64, page int) ([]models.SleepScore, models.Error)
+	Delete(ctx context.Context, tx *sql.Tx, id, user_id int64) models.Error
+}
+
+var Namespace = zap.Namespace("repository")

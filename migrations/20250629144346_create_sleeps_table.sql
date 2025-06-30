@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 create table sleeps (
     id bigserial primary key,
-    user_id bigint not null references users(id),
+    user_id bigint not null references users(id) on delete cascade,
     sleep_time smallint check (sleep_time >= 0 AND sleep_time < 1440),  
     wake_time smallint check (wake_time >= 0 AND wake_time < 1440),
     score smallint not null check (score >= 0 AND score <= 100),
@@ -13,6 +13,9 @@ create table sleeps (
         (sleep_time is not null and wake_time is not null)
     )
 );
+
+create index idx_user_week on sleeps (user_id, date_trunc('week', enter_date));
+create index idx_user_year on sleeps (user_id, date_trunc('year', enter_date));
 -- +goose StatementEnd
 
 -- +goose Down
