@@ -16,11 +16,12 @@ type (
 		CreatedAt    time.Time `json:"created_at"`
 	}
 	Friend struct {
-		FriendshipID int64            `json:"friendship_id"`
-		User1ID      int64            `json:"user1_id"`
-		User2ID      int64            `json:"user2_id"`
-		Status       FriendshipStatus `json:"status"`
-		CreatedAt    time.Time        `json:"created_at"`
+		ID         int64     `json:"friendship_id"`
+		User1      User      `json:"user1"`
+		User2      User      `json:"user2"`
+		IsAccepted bool      `json:"is_accepted"`
+		CreatedAt  time.Time `json:"created_at"`
+		UpdatedAt  time.Time `json:"updated_at"`
 	}
 	Sleep struct {
 		ID     int64 `json:"id"`
@@ -42,14 +43,6 @@ func ValidUsername(u string) bool {
 	}
 	matched, err := regexp.MatchString("^[a-zA-Z0-9_]+$", u)
 	return err == nil && matched
-}
-
-func ValidStatus(s FriendshipStatus) bool {
-	switch s {
-	case FriendshipRequested, FriendshipAccepted, FriendshipRejected:
-		return true
-	}
-	return false
 }
 func ValidSleepWake(sleep, wake NullInt16) bool {
 	if !sleep.Valid && !wake.Valid {

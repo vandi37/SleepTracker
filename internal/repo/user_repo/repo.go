@@ -24,45 +24,30 @@ func (r *Repo) Create(ctx context.Context, tx *sql.Tx, username string, nickname
 	if nickname == "" {
 		return 0, models.Invalid("nickname", nickname)
 	}
-	rows, err := tx.QueryContext(
+	var id int64
+	err := tx.QueryRowContext(
 		ctx,
 		`insert into users (username, nickname, password_hash, birth) values ($1, $2, $3, $4) returning id`,
 		username,
 		nickname,
 		password,
 		birth,
-	)
-	if err, ok := err.(*pq.Error); ok && err.Code == "23505" {
+	).Scan(&id)
+	if err == sql.ErrNoRows {
+		logger.Error(ctx, "got no rows after inserting a new user",
+			zap.String("username", username),
+			zap.String("nickname", nickname),
+		)
+		return 0, models.Internal(repo.NoRows)
+	} else if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == "23505" {
 		return 0, UsernameTakenError(username)
 	} else if err != nil {
 		logger.Error(ctx, "got an internal error while inserting a new user",
 			zap.Error(err),
 			zap.String("username", username),
 			zap.String("nickname", nickname),
-			zap.String("birth", birth.Format(time.DateOnly)),
 		)
 		return 0, models.Internal(err)
-	}
-	defer rows.Close()
-	if !rows.Next() {
-		logger.Error(ctx, "got no rows after inserting a new user",
-			zap.Error(err),
-			zap.String("username", username),
-			zap.String("nickname", nickname),
-			zap.String("birth", birth.Format(time.DateOnly)),
-		)
-		return 0, models.Internal(repo.NoRows)
-	}
-	var id int64
-
-	if err = rows.Scan(&id); err != nil {
-		logger.Error(ctx, "got an internal error while scanning id of a new user", zap.Error(err),
-			zap.Error(err),
-			zap.String("username", username),
-			zap.String("nickname", nickname),
-			zap.String("birth", birth.Format(time.DateOnly)),
-		)
-		return 0, models.Internal(repo.ErrScanning(err))
 	}
 	return id, nil
 }
@@ -86,39 +71,30 @@ func (r *Repo) Delete(ctx context.Context, tx *sql.Tx, id int64) models.Error {
 
 // Get implements repo.User.
 func (r *Repo) Get(ctx context.Context, tx *sql.Tx, id int64) (models.User, models.Error) {
-	rows, err := tx.QueryContext(ctx, `select id, username, nickname, birth, created_at from users where id = $1`, id)
 	var user models.User
+	err := tx.QueryRowContext(ctx, `select id, username, nickname, birth, created_at from users where id = $1`, id).
+		Scan(&user.ID, &user.Username, &user.Nickname, &user.Birth, &user.CreatedAt)
+	if err == sql.ErrNoRows {
+		return user, UserNotFound(id)
+	}
 	if err != nil {
 		logger.Error(ctx, "got an internal error while getting user", zap.Error(err), zap.Int64("id", id))
 		return user, models.Internal(err)
-	}
-	defer rows.Close()
-	if !rows.Next() {
-		return user, UserNotFound(id)
-	}
-	if err := rows.Scan(&user.ID, &user.Username, &user.Nickname, &user.Birth, &user.CreatedAt); err != nil {
-		logger.Error(ctx, "got an internal error while scanning user", zap.Error(err), zap.Int64("id", id))
-		return user, models.Internal(repo.ErrScanning(err))
 	}
 	return user, nil
 }
 
 // GetWithPassword implements repo.User.
 func (r *Repo) GetWithPassword(ctx context.Context, tx *sql.Tx, username string, password []byte) (models.User, models.Error) {
-	rows, err := tx.QueryContext(ctx, `select id, username, nickname, birth, created_at 
-		from users where username = $1 and password_hash = $2`, username, password)
 	var user models.User
+	err := tx.QueryRowContext(ctx, `select id, username, nickname, birth, created_at from users where username = $1 and password_hash = $2`, username, password).
+		Scan(&user.ID, &user.Username, &user.Nickname, &user.Birth, &user.CreatedAt)
+	if err == sql.ErrNoRows {
+		return user, InvalidCredentials{}
+	}
 	if err != nil {
 		logger.Error(ctx, "got an internal error while getting user", zap.Error(err), zap.String("username", username))
 		return user, models.Internal(err)
-	}
-	defer rows.Close()
-	if !rows.Next() {
-		return user, InvalidCredentials{}
-	}
-	if err := rows.Scan(&user.ID, &user.Username, &user.Nickname, &user.Birth, &user.CreatedAt); err != nil {
-		logger.Error(ctx, "got an internal error while scanning user", zap.String("username", username))
-		return user, models.Internal(repo.ErrScanning(err))
 	}
 	return user, nil
 }
@@ -162,7 +138,6 @@ func (r *Repo) Update(ctx context.Context, tx *sql.Tx, id int64, username string
 			zap.Int64("id", id),
 			zap.String("username", username),
 			zap.String("nickname", nickname),
-			zap.String("birth", birth.Format(time.DateOnly)),
 		)
 		return models.Internal(err)
 	}
@@ -172,7 +147,6 @@ func (r *Repo) Update(ctx context.Context, tx *sql.Tx, id int64, username string
 			zap.Int64("id", id),
 			zap.String("username", username),
 			zap.String("nickname", nickname),
-			zap.String("birth", birth.Format(time.DateOnly)),
 		)
 		return models.Internal(err)
 	} else if !ok {

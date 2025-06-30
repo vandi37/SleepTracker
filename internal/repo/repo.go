@@ -18,4 +18,11 @@ type User interface {
 	Delete(ctx context.Context, tx *sql.Tx, id int64) models.Error
 }
 
+type Friend interface {
+	Request(ctx context.Context, tx *sql.Tx, from, to int64) (int64, models.Error)
+	Accept(ctx context.Context, tx *sql.Tx, id, by int64) models.Error
+	Delete(ctx context.Context, tx *sql.Tx, id, by int64) models.Error
+	Get(ctx context.Context, tx *sql.Tx, user int64) ([]models.Friend, models.Error)
+}
+
 var RepoNamespace = zap.Namespace("repository")
