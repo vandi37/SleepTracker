@@ -15,7 +15,7 @@ func (u UsernameTakenError) Error() string {
 func (UsernameTakenError) Code() int { return http.StatusConflict }
 func (u UsernameTakenError) JsonError() models.JsonError {
 	return models.JsonError{
-		Code:    http.StatusConflict,
+		Status:  http.StatusConflict,
 		Message: "username taken",
 		Context: map[string]any{
 			"username": u,
@@ -29,7 +29,7 @@ func (u UserNotFound) Error() string { return fmt.Sprintf("user %x not found", i
 func (UserNotFound) Code() int       { return http.StatusNotFound }
 func (u UserNotFound) JsonError() models.JsonError {
 	return models.JsonError{
-		Code:    http.StatusNotFound,
+		Status:  http.StatusNotFound,
 		Message: "user not found",
 		Context: map[string]any{"id": u},
 	}
@@ -41,7 +41,7 @@ func (InvalidCredentials) Error() string { return "invalid credentials" }
 func (InvalidCredentials) Code() int     { return http.StatusUnauthorized }
 func (i InvalidCredentials) JsonError() models.JsonError {
 	return models.JsonError{
-		Code:    http.StatusUnauthorized,
+		Status:  http.StatusUnauthorized,
 		Message: i.Error(),
 	}
 }

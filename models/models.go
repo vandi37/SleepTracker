@@ -26,9 +26,9 @@ type (
 	Sleep struct {
 		ID     int64 `json:"id"`
 		UserID int64 `json:"user_id"`
-		// 0-1440
+		// 0-2160
 		SleepTime NullInt16 `json:"sleep_time"`
-		// 0-1440
+		// 0-2160
 		WakeTime NullInt16 `json:"wake_time"`
 		// 0-100
 		Score     int8      `json:"score"`
@@ -50,13 +50,10 @@ func ValidUsername(u string) bool {
 	return err == nil && matched
 }
 func ValidSleepWake(sleep, wake NullInt16) bool {
-	if !sleep.Valid && !wake.Valid {
-		return true
-	}
-	return false
+	return (sleep.Valid && wake.Valid && sleep.Int16 < wake.Int16) || (!sleep.Valid && !wake.Valid)
 }
 func ValidTime(time int16) bool {
-	return time >= 0 && time < 1440
+	return time >= 0 && time < 2160
 }
 
 func ValidPercent(percent int16) bool {

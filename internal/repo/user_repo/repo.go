@@ -80,18 +80,19 @@ func (r *Repo) Get(ctx context.Context, tx *sql.Tx, id int64) (models.User, mode
 }
 
 // GetWithPassword implements repo.User.
-func (r *Repo) GetWithPassword(ctx context.Context, tx *sql.Tx, username string, password []byte) (models.User, models.Error) {
-	var user models.User
-	err := tx.QueryRowContext(ctx, `select id, username, nickname, birth, created_at from users where username = $1 and password_hash = $2`, username, password).
-		Scan(&user.ID, &user.Username, &user.Nickname, &user.Birth, &user.CreatedAt)
+func (r *Repo) GetByUsername(ctx context.Context, tx *sql.Tx, username string) (int64, []byte, models.Error) {
+	var id int64
+	var passwordHash []byte
+	err := tx.QueryRowContext(ctx, `select id, password_hash, from users where username = $1`, username).
+		Scan(&id, &passwordHash)
 	if err == sql.ErrNoRows {
-		return user, InvalidCredentials{}
+		return id, passwordHash, InvalidCredentials{}
 	}
 	if err != nil {
 		logger.Error(ctx, "got an internal error while getting user", repo.Namespace, zap.Error(err), zap.String("username", username))
-		return user, models.Internal(err)
+		return id, passwordHash, models.Internal(err)
 	}
-	return user, nil
+	return id, passwordHash, nil
 }
 
 // Update implements repo.User.

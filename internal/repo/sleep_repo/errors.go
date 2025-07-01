@@ -13,7 +13,7 @@ func (s SleepRecordNotFound) Error() string { return fmt.Sprintf("friendship %x 
 func (SleepRecordNotFound) Code() int       { return http.StatusNotFound }
 func (s SleepRecordNotFound) JsonError() models.JsonError {
 	return models.JsonError{
-		Code:    http.StatusNotFound,
+		Status:    http.StatusNotFound,
 		Message: "friendship not found",
 		Context: map[string]any{"id": s},
 	}
@@ -27,7 +27,7 @@ func (s SleepRecordAlreadyWritten) Error() string {
 func (SleepRecordAlreadyWritten) Code() int { return http.StatusConflict }
 func (s SleepRecordAlreadyWritten) JsonError() models.JsonError {
 	return models.JsonError{
-		Code:    http.StatusConflict,
+		Status:    http.StatusConflict,
 		Message: "sleep record already exists",
 		Context: map[string]any{
 			"user_id": s,
@@ -43,7 +43,7 @@ func (InvalidSleepWake) Error() string {
 func (InvalidSleepWake) Code() int { return http.StatusUnprocessableEntity }
 func (i InvalidSleepWake) JsonError() models.JsonError {
 	return models.JsonError{
-		Code:    http.StatusUnprocessableEntity,
+		Status:    http.StatusUnprocessableEntity,
 		Message: i.Error(),
 	}
 }

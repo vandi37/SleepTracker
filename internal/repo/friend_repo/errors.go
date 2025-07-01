@@ -17,7 +17,7 @@ func (f FriendshipAlreadyExists) Error() string {
 func (FriendshipAlreadyExists) Code() int { return http.StatusConflict }
 func (f FriendshipAlreadyExists) JsonError() models.JsonError {
 	return models.JsonError{
-		Code:    http.StatusConflict,
+		Status:    http.StatusConflict,
 		Message: "friendship or friendship request already exists",
 		Context: map[string]any{
 			"user1_id": f.from,
@@ -34,7 +34,7 @@ func (s SelfRequest) Error() string {
 func (SelfRequest) Code() int { return http.StatusUnprocessableEntity }
 func (s SelfRequest) JsonError() models.JsonError {
 	return models.JsonError{
-		Code:    http.StatusUnprocessableEntity,
+		Status:    http.StatusUnprocessableEntity,
 		Message: "can't requests yourself for a friendship",
 		Context: map[string]any{"user_id": s},
 	}
@@ -46,7 +46,7 @@ func (f FriendshipNotFound) Error() string { return fmt.Sprintf("friendship %x n
 func (FriendshipNotFound) Code() int       { return http.StatusNotFound }
 func (u FriendshipNotFound) JsonError() models.JsonError {
 	return models.JsonError{
-		Code:    http.StatusNotFound,
+		Status:    http.StatusNotFound,
 		Message: "friendship not found",
 		Context: map[string]any{"id": u},
 	}
@@ -60,7 +60,7 @@ func (f FriendshipAlreadyAccepted) Error() string {
 func (FriendshipAlreadyAccepted) Code() int { return http.StatusConflict }
 func (f FriendshipAlreadyAccepted) JsonError() models.JsonError {
 	return models.JsonError{
-		Code:    http.StatusConflict,
+		Status:    http.StatusConflict,
 		Message: "friendship already accepted",
 		Context: map[string]any{"id": f},
 	}

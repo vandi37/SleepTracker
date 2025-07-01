@@ -14,7 +14,7 @@ type User interface {
 	Update(ctx context.Context, tx *sql.Tx, id int64, username, nickname string, birth time.Time) models.Error
 	UpdatePassword(ctx context.Context, tx *sql.Tx, id int64, password []byte) models.Error
 	Get(ctx context.Context, tx *sql.Tx, id int64) (models.User, models.Error)
-	GetWithPassword(ctx context.Context, tx *sql.Tx, username string, password []byte) (models.User, models.Error)
+	GetByUsername(ctx context.Context, tx *sql.Tx, username string) (int64, []byte, models.Error)
 	Delete(ctx context.Context, tx *sql.Tx, id int64) models.Error
 }
 

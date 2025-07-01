@@ -6,10 +6,15 @@ import (
 )
 
 type JsonError struct {
-	Code    int            `json:"code"`
+	Status  int            `json:"code"`
 	Message string         `json:"message"`
 	Context map[string]any `json:"context,omitempty"`
 }
+
+func (e JsonError) Error() string        { return e.Message }
+func (e JsonError) Code() int            { return e.Status }
+func (e JsonError) JsonError() JsonError { return e }
+
 type Error interface {
 	error
 	JsonError() JsonError
@@ -21,7 +26,7 @@ type InternalError struct{ Err error }
 func (ie InternalError) Error() string { return ie.Err.Error() }
 func (InternalError) JsonError() JsonError {
 	return JsonError{
-		Code:    http.StatusInternalServerError,
+		Status:  http.StatusInternalServerError,
 		Message: "internal error",
 	}
 }
@@ -45,7 +50,7 @@ func (InvalidError[T]) Code() int {
 }
 func (i InvalidError[T]) JsonError() JsonError {
 	return JsonError{
-		Code:    http.StatusBadRequest,
+		Status:  http.StatusBadRequest,
 		Message: fmt.Sprint("invalid ", i.Field),
 		Context: map[string]any{i.Field: i.Value},
 	}
@@ -66,7 +71,7 @@ func (f NotAllowed) Error() string {
 func (NotAllowed) Code() int { return http.StatusForbidden }
 func (f NotAllowed) JsonError() JsonError {
 	return JsonError{
-		Code:    http.StatusForbidden,
+		Status:  http.StatusForbidden,
 		Message: fmt.Sprintf("user is not allowed to %s", f.Thing),
 		Context: map[string]any{"id": f.Id, "user_id": f.User},
 	}

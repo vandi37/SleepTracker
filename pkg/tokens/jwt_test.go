@@ -13,8 +13,7 @@ import (
 func TestTokenService_Generate(t *testing.T) {
 	secret := "test-secret"
 	expiration := 1 * time.Hour
-	nbfDelay := time.Duration(0)
-	service := tokens.New(secret, expiration, nbfDelay)
+	service := tokens.New(secret, expiration)
 
 	tests := []struct {
 		name       string
@@ -85,18 +84,16 @@ func TestTokenService_Generate(t *testing.T) {
 			now := time.Now()
 			iat := time.Unix(int64(claims["iat"].(float64)), 0)
 			exp := time.Unix(int64(claims["exp"].(float64)), 0)
-			nbf := time.Unix(int64(claims["nbf"].(float64)), 0)
 
 			assert.WithinDuration(t, now, iat, time.Second)
 			assert.WithinDuration(t, now.Add(expiration), exp, time.Second)
-			assert.WithinDuration(t, now.Add(nbfDelay), nbf, time.Second)
 		})
 	}
 }
 
 func TestTokenService_Parse(t *testing.T) {
 	secret := "test-secret"
-	service := tokens.New(secret, 1*time.Hour, 0)
+	service := tokens.New(secret, 1*time.Hour)
 
 	t.Run("Valid token", func(t *testing.T) {
 		tokenStr, err := service.Generate("user123")
@@ -116,7 +113,7 @@ func TestTokenService_Parse(t *testing.T) {
 		require.NoError(t, err)
 
 		// Create another service with different secret
-		otherService := tokens.New("different-secret", 1*time.Hour, 5*time.Minute)
+		otherService := tokens.New("different-secret", 1*time.Hour)
 		_, err = otherService.Parse(tokenStr)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "signature is invalid")
@@ -130,7 +127,7 @@ func TestTokenService_Parse(t *testing.T) {
 
 	t.Run("Expired token", func(t *testing.T) {
 		// Create service with very short expiration
-		shortService := tokens.New(secret, -1*time.Hour, 0)
+		shortService := tokens.New(secret, -1*time.Hour)
 		tokenStr, err := shortService.Generate("user123")
 		require.NoError(t, err)
 
@@ -139,46 +136,33 @@ func TestTokenService_Parse(t *testing.T) {
 		assert.Contains(t, err.Error(), "token is expired")
 	})
 
-	t.Run("Token not yet valid", func(t *testing.T) {
-		// Create service with future nbf
-		futureService := tokens.New(secret, 1*time.Hour, 1*time.Hour)
-		tokenStr, err := futureService.Generate("user123")
-		require.NoError(t, err)
-
-		_, err = service.Parse(tokenStr)
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "token is not valid yet")
-	})
 }
 
 func TestNewTokenService(t *testing.T) {
 	t.Run("Default parameters", func(t *testing.T) {
 		secret := "test-secret"
 		expiration := 1 * time.Hour
-		nbfDelay := 5 * time.Minute
 
-		service := tokens.New(secret, expiration, nbfDelay)
+		service := tokens.New(secret, expiration,)
 		assert.Equal(t, []byte(secret), service.GetSecret())
 		assert.Equal(t, expiration, service.GetExpiration())
-		assert.Equal(t, nbfDelay, service.GetNotBefore())
 	})
 
 	t.Run("Zero expiration", func(t *testing.T) {
-		service := tokens.New("secret", 0, 0)
+		service := tokens.New("secret", 0)
 		assert.Equal(t, time.Duration(0), service.GetExpiration())
-		assert.Equal(t, time.Duration(0), service.GetNotBefore())
 	})
 }
 
 func TestTokenService_EdgeCases(t *testing.T) {
 	t.Run("Empty secret", func(t *testing.T) {
-		service := tokens.New("", 1*time.Hour, 5*time.Minute)
+		service := tokens.New("", 1*time.Hour)
 		_, err := service.Generate("user123")
 		require.NoError(t, err) // tokens allows empty secret
 	})
 
 	t.Run("Very long expiration", func(t *testing.T) {
-		service := tokens.New("secret", 365*24*time.Hour, 0)
+		service := tokens.New("secret", 365*24*time.Hour)
 		tokenStr, err := service.Generate("user123")
 		require.NoError(t, err)
 
@@ -188,7 +172,7 @@ func TestTokenService_EdgeCases(t *testing.T) {
 	})
 
 	t.Run("Multiple custom claims", func(t *testing.T) {
-		service := tokens.New("secret", 1*time.Hour, 0)
+		service := tokens.New("secret", 1*time.Hour)
 		data := []tokens.Data{
 			{Key: "name", Value: "John Doe"},
 			{Key: "age", Value: 30},
