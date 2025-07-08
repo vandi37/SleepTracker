@@ -12,10 +12,10 @@ import (
 	"go.uber.org/zap"
 )
 
-type FriendRepo struct{}
+type Repo struct{}
 
 // Accept implements repo.Friend.
-func (f *FriendRepo) Accept(ctx context.Context, tx *sql.Tx, id int64, user2_id int64) models.Error {
+func (Repo) Accept(ctx context.Context, tx *sql.Tx, id int64, user2_id int64) models.Error {
 	res, err := tx.ExecContext(ctx, `update friends set is_accepted = true, updated_at = default 
 		where id = $1 and user2_id = $2 and not is_accepted`, id, user2_id)
 	if err != nil {
@@ -44,18 +44,18 @@ func (f *FriendRepo) Accept(ctx context.Context, tx *sql.Tx, id int64, user2_id 
 }
 
 // Delete implements repo.Friend.
-func (f *FriendRepo) Delete(ctx context.Context, tx *sql.Tx, id int64, user2_id int64) models.Error {
-	res, err := tx.ExecContext(ctx, `delete from friends where id = $1 and (user1_id = $2 or user2_id = $2) `, id, user2_id)
+func (Repo) Delete(ctx context.Context, tx *sql.Tx, id int64, user_id int64) models.Error {
+	res, err := tx.ExecContext(ctx, `delete from friends where id = $1 and (user1_id = $2 or user2_id = $2) `, id, user_id)
 	if err != nil {
 		logger.Error(ctx, "got an internal error while deleting friendship or friendship request",
-			repo.Namespace, zap.Error(err), zap.Int64("id", id), zap.Int64("user2_id", user2_id))
+			repo.Namespace, zap.Error(err), zap.Int64("id", id), zap.Int64("user_id", user_id))
 		return models.Internal(err)
 	} else if ok, err := repo.CheckRes(res, repo.Equals(1)); err != nil {
 		logger.Error(ctx, "got an internal error while checking result of deleting friendship or friendship request",
 			repo.Namespace,
 			zap.Error(err),
 			zap.Int64("id", id),
-			zap.Int64("user2_id", user2_id),
+			zap.Int64("user_id", user_id),
 		)
 		return models.Internal(err)
 	} else if ok {
@@ -65,14 +65,14 @@ func (f *FriendRepo) Delete(ctx context.Context, tx *sql.Tx, id int64, user2_id 
 		return FriendshipNotFound(id)
 	} else if err != nil {
 		logger.Error(ctx, "got an internal error while getting cause of failed delete",
-			repo.Namespace, zap.Error(err), zap.Int64("id", id), zap.Int64("user2_id", user2_id))
+			repo.Namespace, zap.Error(err), zap.Int64("id", id), zap.Int64("user_id", user_id))
 		return models.Internal(err)
 	}
-	return models.NotAllowed{Id: id, User: user2_id, Thing: "delete a friendship"}
+	return models.NotAllowed{Id: id, User: user_id, Thing: "delete a friendship"}
 }
 
 // Get implements repo.Friend.
-func (f *FriendRepo) Get(ctx context.Context, tx *sql.Tx, user_id int64) ([]models.Friend, models.Error) {
+func (Repo) Get(ctx context.Context, tx *sql.Tx, user_id int64, limit, offset int) ([]models.Friend, models.Error) {
 	rows, err := tx.QueryContext(ctx, `
         select 
             f.id,
@@ -93,7 +93,7 @@ func (f *FriendRepo) Get(ctx context.Context, tx *sql.Tx, user_id int64) ([]mode
         inner join users u1 on f.user1_id = u1.id
         inner join users u2 on f.user2_id = u2.id
         where f.user1_id = $1 or f.user2_id = $1
-        order by f.updated_at desc`, user_id)
+        order by f.updated_at desc limit $2 offset $3`, user_id, limit, offset)
 	if err != nil {
 		logger.Error(ctx, "got an internal error while getting friendships and friendship requests",
 			repo.Namespace,
@@ -148,7 +148,7 @@ func (f *FriendRepo) Get(ctx context.Context, tx *sql.Tx, user_id int64) ([]mode
 }
 
 // Request implements repo.Friend.
-func (f *FriendRepo) Request(ctx context.Context, tx *sql.Tx, user1_id int64, user2_id int64) (int64, models.Error) {
+func (Repo) Request(ctx context.Context, tx *sql.Tx, user1_id int64, user2_id int64) (int64, models.Error) {
 	if user1_id == user2_id {
 		return 0, SelfRequest(user1_id)
 	}
@@ -179,4 +179,4 @@ func (f *FriendRepo) Request(ctx context.Context, tx *sql.Tx, user1_id int64, us
 	return id, nil
 }
 
-var _ repo.Friend = (*FriendRepo)(nil)
+var _ repo.Friend = Repo{}

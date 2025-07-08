@@ -27,6 +27,7 @@ func RegisterHandler(allowed []string) *gin.Engine {
 	users.GET("/")
 	users.GET("/:id")
 	users.PUT("/")
+	users.PATCH("/password")
 	users.DELETE("/")
 	friends := r.Group("/friends")
 	friends.POST("/request")
@@ -38,11 +39,12 @@ func RegisterHandler(allowed []string) *gin.Engine {
 	friends.GET("/:id/table/:page")
 
 	sleep := r.Group("/sleep")
-	sleep.POST("/")
-	sleep.GET("/history/:page")
-	sleep.GET("/table/:page")
+	sleep.POST("/sleep")
 	sleep.PUT("/:id")
 	sleep.DELETE("/:id")
+
+	r.GET("/history/:page")
+	r.GET("/table/:page")
 
 	return r
 }

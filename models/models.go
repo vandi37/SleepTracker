@@ -13,7 +13,7 @@ type (
 		Nickname     string    `json:"nickname"`
 		PasswordHash []byte    `json:"-"`
 		Birth        time.Time `json:"birth"`
-		CreatedAt    time.Time `json:"created_at"`
+		CreatedAt    time.Time `json:"created_at,omitempty"`
 	}
 	Friend struct {
 		ID         int64     `json:"friendship_id"`

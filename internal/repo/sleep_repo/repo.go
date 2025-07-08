@@ -3,6 +3,7 @@ package sleep_repo
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/lib/pq"
 	"github.com/vandi37/SleepTracker/internal/repo"
@@ -11,10 +12,10 @@ import (
 	"go.uber.org/zap"
 )
 
-type SleepRepo struct{}
+type Repo struct{}
 
 // Delete implements repo.Sleep.
-func (s *SleepRepo) Delete(ctx context.Context, tx *sql.Tx, id int64, user_id int64) models.Error {
+func (Repo) Delete(ctx context.Context, tx *sql.Tx, id int64, user_id int64) models.Error {
 	if res, err := tx.ExecContext(ctx, `delete from sleeps where id = $1 and user_id = $2`, id, user_id); err != nil {
 		logger.Error(ctx, "got an internal error while deleting sleep record", repo.Namespace, zap.Int64("id", id), zap.Error(err), zap.Int64("user_id", user_id))
 		return models.Internal(err)
@@ -34,7 +35,7 @@ func (s *SleepRepo) Delete(ctx context.Context, tx *sql.Tx, id int64, user_id in
 }
 
 // Enter implements repo.Sleep.
-func (s *SleepRepo) Enter(ctx context.Context, tx *sql.Tx, user_id int64, sleep_time, wake_time models.NullInt16, score int16) (int64, models.Error) {
+func (Repo) Enter(ctx context.Context, tx *sql.Tx, user_id int64, sleep_time, wake_time models.NullInt16, score int16, date time.Time) (int64, models.Error) {
 	if !models.ValidSleepWake(sleep_time, wake_time) {
 		return 0, InvalidSleepWake{}
 	} else if sleep_time.Valid && !models.ValidTime(sleep_time.Int16) {
@@ -58,7 +59,7 @@ func (s *SleepRepo) Enter(ctx context.Context, tx *sql.Tx, user_id int64, sleep_
 }
 
 // Update implements repo.Sleep.
-func (s *SleepRepo) Update(ctx context.Context, tx *sql.Tx, id, user_id int64, sleep_time, wake_time models.NullInt16, score int16) models.Error {
+func (Repo) Update(ctx context.Context, tx *sql.Tx, id, user_id int64, sleep_time, wake_time models.NullInt16, score int16) models.Error {
 	if !models.ValidSleepWake(sleep_time, wake_time) {
 		return InvalidSleepWake{}
 	} else if sleep_time.Valid && !models.ValidTime(sleep_time.Int16) {
@@ -90,7 +91,7 @@ func (s *SleepRepo) Update(ctx context.Context, tx *sql.Tx, id, user_id int64, s
 }
 
 // Week implements repo.Sleep.
-func (s *SleepRepo) Week(ctx context.Context, tx *sql.Tx, user_id int64, page int) ([]models.Sleep, models.Error) {
+func (Repo) Week(ctx context.Context, tx *sql.Tx, user_id int64, page int) ([]models.Sleep, models.Error) {
 	rows, err := tx.QueryContext(ctx, `select id, user_id, sleep_time, wake_time, score, enter_date from sleeps where 
   		user_id = $1 and enter_date between 
     	(date_trunc('week', current_date) - interval '$2 weeks') 
@@ -124,7 +125,7 @@ func (s *SleepRepo) Week(ctx context.Context, tx *sql.Tx, user_id int64, page in
 }
 
 // Year implements repo.Sleep.
-func (s *SleepRepo) Year(ctx context.Context, tx *sql.Tx, user_id int64, page int) ([]models.SleepScore, models.Error) {
+func (Repo) Year(ctx context.Context, tx *sql.Tx, user_id int64, page int) ([]models.SleepScore, models.Error) {
 	rows, err := tx.QueryContext(ctx, `select score, enter_date from sleeps where 
   		user_id = $1 and enter_date between 
     	(date_trunc('year', current_date) - interval '$2 years') 
@@ -157,4 +158,4 @@ func (s *SleepRepo) Year(ctx context.Context, tx *sql.Tx, user_id int64, page in
 	return scores, nil
 }
 
-var _ repo.Sleep = (*SleepRepo)(nil)
+var _ repo.Sleep = Repo{}

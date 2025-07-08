@@ -17,7 +17,7 @@ import (
 type Repo struct{}
 
 // Create implements repo.User.
-func (r *Repo) Create(ctx context.Context, tx *sql.Tx, username string, nickname string, password []byte, birth time.Time) (int64, models.Error) {
+func (Repo) Create(ctx context.Context, tx *sql.Tx, username string, nickname string, password []byte, birth time.Time) (int64, models.Error) {
 	if !models.ValidUsername(username) {
 		return 0, models.Invalid("username", username)
 	}
@@ -48,7 +48,7 @@ func (r *Repo) Create(ctx context.Context, tx *sql.Tx, username string, nickname
 }
 
 // Delete implements repo.User.
-func (r *Repo) Delete(ctx context.Context, tx *sql.Tx, id int64) models.Error {
+func (Repo) Delete(ctx context.Context, tx *sql.Tx, id int64) models.Error {
 	res, err := tx.ExecContext(ctx, `delete from users where id = $1`, id)
 	if err != nil {
 		logger.Error(ctx, "got an internal error while deleting user", repo.Namespace, zap.Error(err), zap.Int64("id", id))
@@ -65,7 +65,7 @@ func (r *Repo) Delete(ctx context.Context, tx *sql.Tx, id int64) models.Error {
 }
 
 // Get implements repo.User.
-func (r *Repo) Get(ctx context.Context, tx *sql.Tx, id int64) (models.User, models.Error) {
+func (Repo) Get(ctx context.Context, tx *sql.Tx, id int64) (models.User, models.Error) {
 	var user models.User
 	err := tx.QueryRowContext(ctx, `select id, username, nickname, birth, created_at from users where id = $1`, id).
 		Scan(&user.ID, &user.Username, &user.Nickname, &user.Birth, &user.CreatedAt)
@@ -80,7 +80,7 @@ func (r *Repo) Get(ctx context.Context, tx *sql.Tx, id int64) (models.User, mode
 }
 
 // GetWithPassword implements repo.User.
-func (r *Repo) GetByUsername(ctx context.Context, tx *sql.Tx, username string) (int64, []byte, models.Error) {
+func (Repo) GetByUsername(ctx context.Context, tx *sql.Tx, username string) (int64, []byte, models.Error) {
 	var id int64
 	var passwordHash []byte
 	err := tx.QueryRowContext(ctx, `select id, password_hash, from users where username = $1`, username).
@@ -96,7 +96,7 @@ func (r *Repo) GetByUsername(ctx context.Context, tx *sql.Tx, username string) (
 }
 
 // Update implements repo.User.
-func (r *Repo) Update(ctx context.Context, tx *sql.Tx, id int64, username string, nickname string, birth time.Time) models.Error {
+func (Repo) Update(ctx context.Context, tx *sql.Tx, id int64, username string, nickname string, birth time.Time) models.Error {
 	qb := strings.Builder{}
 	qb.WriteString(`update users set`)
 	args := []any{id}
@@ -154,7 +154,7 @@ func (r *Repo) Update(ctx context.Context, tx *sql.Tx, id int64, username string
 }
 
 // UpdatePassword implements repo.User.
-func (r *Repo) UpdatePassword(ctx context.Context, tx *sql.Tx, id int64, password []byte) models.Error {
+func (Repo) UpdatePassword(ctx context.Context, tx *sql.Tx, id int64, password []byte) models.Error {
 	res, err := tx.ExecContext(ctx, `update users set password_hash = $2 where id = $1`, id, password)
 	if err != nil {
 		logger.Error(ctx, "got an internal error while updating user password", repo.Namespace, zap.Error(err), zap.Int64("id", id))
