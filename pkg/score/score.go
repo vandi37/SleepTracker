@@ -13,7 +13,7 @@ func GetAge(birth time.Time) float64 {
 }
 
 // CalculateSleepScore calculates a score (1–100) in 36 hour format
-func CalculateSleepScore(age float64, sleepTime int, wakeTime int) int {
+func CalculateSleepScore(age float64, sleepTime int16, wakeTime int16) int16 {
 	minSleep, maxSleep := getSleepDurationByAge(age)
 	sleepStartMin, sleepStartMax, wakeUpMin, wakeUpMax := getIdealSleepWindow(age)
 	duration := wakeTime - sleepTime
@@ -24,7 +24,7 @@ func CalculateSleepScore(age float64, sleepTime int, wakeTime int) int {
 	return clamp(totalScore, 1, 100)
 }
 
-func getSleepDurationByAge(age float64) (int, int) {
+func getSleepDurationByAge(age float64) (int16, int16) {
 	switch {
 	case age < 1: // 0-11 months
 		return 780, 1020
@@ -43,7 +43,7 @@ func getSleepDurationByAge(age float64) (int, int) {
 	}
 }
 
-func getIdealSleepWindow(age float64) (sleepStartMin, sleepStartMax, wakeUpMin, wakeUpMax int) {
+func getIdealSleepWindow(age float64) (sleepStartMin, sleepStartMax, wakeUpMin, wakeUpMax int16) {
 	switch {
 	case age < 13: // Kids
 		return 480, 570, 1080, 1200 // 20:00–21:30 → 6:00–8:00
@@ -56,7 +56,7 @@ func getIdealSleepWindow(age float64) (sleepStartMin, sleepStartMax, wakeUpMin, 
 	}
 }
 
-func evaluateDurationScore(duration, minSleep, maxSleep int) int {
+func evaluateDurationScore(duration, minSleep, maxSleep int16) int16 {
 	if duration < minSleep {
 		penalty := (minSleep - duration) / 30
 		return max(0, 50-6*penalty)
@@ -67,7 +67,7 @@ func evaluateDurationScore(duration, minSleep, maxSleep int) int {
 	return 50
 }
 
-func evaluateSleepStartScore(sleepTime, sleepStartMin, sleepStartMax int) int {
+func evaluateSleepStartScore(sleepTime, sleepStartMin, sleepStartMax int16) int16 {
 	if sleepTime <= sleepStartMin {
 		penalty := (sleepStartMin - sleepTime + 29) / 30
 		return max(0, 25-penalty)
@@ -79,7 +79,7 @@ func evaluateSleepStartScore(sleepTime, sleepStartMin, sleepStartMax int) int {
 	}
 }
 
-func evaluateWakeTimeScore(wakeUpMin, wakeUpMax, wakeTime int) int {
+func evaluateWakeTimeScore(wakeUpMin, wakeUpMax, wakeTime int16) int16 {
 	if wakeTime <= wakeUpMin {
 		penalty := (wakeUpMin - wakeTime + 29) / 30
 		return max(0, 25-3*penalty)
@@ -91,6 +91,6 @@ func evaluateWakeTimeScore(wakeUpMin, wakeUpMax, wakeTime int) int {
 	}
 }
 
-func clamp(value, minimum, maximum int) int {
+func clamp(value, minimum, maximum int16) int16 {
 	return max(minimum, min(maximum, value))
 }

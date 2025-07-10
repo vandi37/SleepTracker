@@ -11,6 +11,7 @@ import (
 	"github.com/vandi37/SleepTracker/internal/repo/user_repo"
 	"github.com/vandi37/SleepTracker/models"
 	"github.com/vandi37/SleepTracker/pkg/logger"
+	"github.com/vandi37/SleepTracker/pkg/score"
 	"github.com/vandi37/SleepTracker/pkg/tokens"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
@@ -175,13 +176,13 @@ func (s *Service) GetUser(ctx context.Context, id int64) (models.User, models.Er
 	return user, nil
 }
 
-func (s *Service) UpdateUser(ctx context.Context, upd models.UpdateUser) models.Error {
+func (s *Service) UpdateUser(ctx context.Context, upd models.User) models.Error {
 	tx, err := s.Database.BeginTx(ctx, nil)
 	if err != nil {
 		logger.Error(ctx, "got an internal error while beginning transaction", Namespace, zap.Error(err))
 		return models.Internal(err)
 	}
-	rErr := s.UserRepo.Update(ctx, tx, upd.Id, upd.Username, upd.Nickname, upd.Birth)
+	rErr := s.UserRepo.Update(ctx, tx, upd.Id, upd.Username, upd.Nickname, time.Time(upd.Birth))
 	if rErr != nil {
 		tx.Rollback()
 		logger.Debug(ctx, "error updating user", Namespace, zap.Error(rErr), zap.Int64("id", upd.Id))
@@ -301,4 +302,76 @@ func (s *Service) GetFriendships(ctx context.Context, get models.GetFriendships)
 	tx.Commit()
 	logger.Debug(ctx, "got friendships", Namespace, zap.Int64("user_id", get.UserId))
 	return fr, nil
+}
+
+func (s *Service) EnterSleep(ctx context.Context, enter models.Sleep) (int64, models.Error) {
+	tx, err := s.Database.BeginTx(ctx, nil)
+	if err != nil {
+		logger.Error(ctx, "got an internal error while beginning transaction", Namespace, zap.Error(err))
+		return 0, models.Internal(err)
+	}
+
+	var enterScore int16
+	if enter.SleepTime.Valid && enter.WakeTime.Valid {
+		birth, rErr := s.UserRepo.GetBirth(ctx, tx, enter.UserId)
+		if rErr != nil {
+			tx.Rollback()
+			logger.Debug(ctx, "error getting birth", Namespace, zap.Error(rErr), zap.Int64("user_id", enter.UserId), zap.String("date", enter.EnterDate.String()))
+			return 0, rErr
+		}
+		enterScore = score.CalculateSleepScore(score.GetAge(birth), enter.SleepTime.Int16, enter.WakeTime.Int16)
+	}
+	id, rErr := s.SleepRepo.Enter(ctx, tx, enter.UserId, enter.SleepTime, enter.WakeTime, enterScore, time.Time(enter.EnterDate))
+	if rErr != nil {
+		tx.Rollback()
+		logger.Debug(ctx, "error entering sleep", Namespace, zap.Error(rErr), zap.Int64("user_id", enter.UserId), zap.String("date", enter.EnterDate.String()))
+		return 0, rErr
+	}
+	tx.Commit()
+	logger.Debug(ctx, "got friendships", Namespace, zap.Int64("user_id", enter.UserId), zap.String("date", enter.EnterDate.String()))
+	return id, nil
+}
+
+func (s *Service) UpdateSleep(ctx context.Context, upd models.Sleep) models.Error {
+	tx, err := s.Database.BeginTx(ctx, nil)
+	if err != nil {
+		logger.Error(ctx, "got an internal error while beginning transaction", Namespace, zap.Error(err))
+		return models.Internal(err)
+	}
+	var enterScore int16
+	if upd.SleepTime.Valid && upd.WakeTime.Valid {
+		birth, rErr := s.UserRepo.GetBirth(ctx, tx, upd.UserId)
+		if rErr != nil {
+			tx.Rollback()
+			logger.Debug(ctx, "error getting birth", Namespace, zap.Error(rErr), zap.Int64("user_id", upd.UserId), zap.String("date", upd.EnterDate.String()))
+			return rErr
+		}
+		enterScore = score.CalculateSleepScore(score.GetAge(birth), upd.SleepTime.Int16, upd.WakeTime.Int16)
+	}
+	rErr := s.SleepRepo.Update(ctx, tx, upd.Id, upd.UserId, upd.SleepTime, upd.WakeTime, enterScore)
+	if rErr != nil {
+		tx.Rollback()
+		logger.Debug(ctx, "error updating sleep record", Namespace, zap.Error(rErr), zap.Int64("id", upd.Id))
+		return rErr
+	}
+	tx.Commit()
+	logger.Debug(ctx, "updated a sleep record", Namespace, zap.Int64("id", upd.Id))
+	return nil
+}
+
+func (s *Service) DeleteSleep(ctx context.Context, id, user_id int64) models.Error {
+	tx, err := s.Database.BeginTx(ctx, nil)
+	if err != nil {
+		logger.Error(ctx, "got an internal error while beginning transaction", Namespace, zap.Error(err))
+		return models.Internal(err)
+	}
+	rErr := s.SleepRepo.Delete(ctx, tx, id, user_id)
+	if rErr != nil {
+		tx.Rollback()
+		logger.Debug(ctx, "error deleting a sleep record", Namespace, zap.Error(rErr), zap.Int64("id", id))
+		return rErr
+	}
+	tx.Commit()
+	logger.Debug(ctx, "deleted a sleep record", Namespace, zap.Int64("id", id))
+	return nil
 }

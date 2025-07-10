@@ -3,8 +3,6 @@ package user_repo
 import (
 	"context"
 	"database/sql"
-	"fmt"
-	"strings"
 	"time"
 
 	"github.com/lib/pq"
@@ -15,6 +13,21 @@ import (
 )
 
 type Repo struct{}
+
+// GetBirth implements repo.User.
+func (r *Repo) GetBirth(ctx context.Context, tx *sql.Tx, id int64) (time.Time, models.Error) {
+	var time time.Time
+	err := tx.QueryRowContext(ctx, `select birth from users where id = $1`, id).
+		Scan(&time)
+	if err == sql.ErrNoRows {
+		return time, UserNotFound(id)
+	}
+	if err != nil {
+		logger.Error(ctx, "got an internal error while getting user birth", repo.Namespace, zap.Error(err), zap.Int64("id", id))
+		return time, models.Internal(err)
+	}
+	return time, nil
+}
 
 // Create implements repo.User.
 func (Repo) Create(ctx context.Context, tx *sql.Tx, username string, nickname string, password []byte, birth time.Time) (int64, models.Error) {
@@ -68,7 +81,7 @@ func (Repo) Delete(ctx context.Context, tx *sql.Tx, id int64) models.Error {
 func (Repo) Get(ctx context.Context, tx *sql.Tx, id int64) (models.User, models.Error) {
 	var user models.User
 	err := tx.QueryRowContext(ctx, `select id, username, nickname, birth, created_at from users where id = $1`, id).
-		Scan(&user.ID, &user.Username, &user.Nickname, &user.Birth, &user.CreatedAt)
+		Scan(&user.Id, &user.Username, &user.Nickname, &user.Birth, &user.CreatedAt)
 	if err == sql.ErrNoRows {
 		return user, UserNotFound(id)
 	}
@@ -97,35 +110,13 @@ func (Repo) GetByUsername(ctx context.Context, tx *sql.Tx, username string) (int
 
 // Update implements repo.User.
 func (Repo) Update(ctx context.Context, tx *sql.Tx, id int64, username string, nickname string, birth time.Time) models.Error {
-	qb := strings.Builder{}
-	qb.WriteString(`update users set`)
-	args := []any{id}
-	if username != "" {
-		if !models.ValidUsername(username) {
-			return models.Invalid("username", username)
-		}
-		args = append(args, username)
-		qb.WriteString(fmt.Sprint(` username = $`, len(args)))
+	if !models.ValidUsername(username) {
+		return models.Invalid("username", username)
 	}
-	if nickname != "" {
-		if len(args) > 1 {
-			qb.WriteString(`, `)
-		}
-		args = append(args, nickname)
-		qb.WriteString(fmt.Sprint(` nickname = $`, len(args)))
+	if nickname == "" {
+		return models.Invalid("nickname", nickname)
 	}
-	if !birth.IsZero() {
-		if len(args) > 1 {
-			qb.WriteString(`, `)
-		}
-		args = append(args, birth)
-		qb.WriteString(fmt.Sprint(` birth = $`, len(args)))
-	}
-	if len(args) <= 1 {
-		return nil
-	}
-	qb.WriteString(` where id = $1`)
-	res, err := tx.ExecContext(ctx, qb.String(), args...)
+	res, err := tx.ExecContext(ctx, `update users set username = $2 nickname = $3, birth = $ where id = $1`, id, username, nickname, birth)
 	if err, ok := err.(*pq.Error); ok && err.Code == "23505" {
 		return UsernameTakenError(username)
 	} else if err != nil {

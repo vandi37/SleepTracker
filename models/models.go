@@ -3,20 +3,22 @@ package models
 import (
 	"regexp"
 	"time"
+
+	"github.com/vandi37/SleepTracker/pkg/date"
 )
 
 type (
 	User struct {
-		ID int64 `json:"id"`
+		Id int64 `json:"id"`
 		// 3-40 chars
 		Username     string    `json:"username"`
 		Nickname     string    `json:"nickname"`
 		PasswordHash []byte    `json:"-"`
-		Birth        time.Time `json:"birth"`
-		CreatedAt    time.Time `json:"created_at,omitempty"`
+		Birth        date.Date `json:"birth"`
+		CreatedAt    time.Time `json:"created_at"`
 	}
 	Friend struct {
-		ID         int64     `json:"friendship_id"`
+		Id         int64     `json:"friendship_id"`
 		User1      User      `json:"user1"`
 		User2      User      `json:"user2"`
 		IsAccepted bool      `json:"is_accepted"`
@@ -24,21 +26,21 @@ type (
 		UpdatedAt  time.Time `json:"updated_at"`
 	}
 	Sleep struct {
-		ID     int64 `json:"id"`
-		UserID int64 `json:"user_id"`
+		Id     int64 `json:"id"`
+		UserId int64 `json:"user_id"`
 		// 0-2160
 		SleepTime NullInt16 `json:"sleep_time"`
 		// 0-2160
 		WakeTime NullInt16 `json:"wake_time"`
 		// 0-100
-		Score     int8      `json:"score"`
-		EnterDate time.Time `json:"enter_date"`
+		Score     int16     `json:"score"`
+		EnterDate date.Date `json:"enter_date"`
 		CreatedAt time.Time `json:"created_at"`
 	}
 	SleepScore struct {
 		// 0-100
-		Score     int8      `json:"score"`
-		EnterDate time.Time `json:"enter_date"`
+		Score     int16     `json:"score"`
+		EnterDate date.Date `json:"enter_date"`
 	}
 )
 

@@ -110,16 +110,16 @@ func (Repo) Get(ctx context.Context, tx *sql.Tx, user_id int64, limit, offset in
 		var user2 models.User
 
 		err := rows.Scan(
-			&friend.ID,
+			&friend.Id,
 			&friend.IsAccepted,
 			&friend.CreatedAt,
 			&friend.UpdatedAt,
-			&user1.ID,
+			&user1.Id,
 			&user1.Username,
 			&user1.Nickname,
 			&user1.Birth,
 			&user1.CreatedAt,
-			&user2.ID,
+			&user2.Id,
 			&user2.Username,
 			&user2.Nickname,
 			&user2.Birth,

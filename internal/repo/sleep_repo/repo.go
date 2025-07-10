@@ -105,7 +105,7 @@ func (Repo) Week(ctx context.Context, tx *sql.Tx, user_id int64, page int) ([]mo
 	sleeps := make([]models.Sleep, 0, 7)
 	for rows.Next() {
 		var sleep models.Sleep
-		if err := rows.Scan(&sleep.ID, &sleep.UserID, &sleep.SleepTime, &sleep.WakeTime, &sleep.Score, &sleep.EnterDate); err != nil {
+		if err := rows.Scan(&sleep.Id, &sleep.UserId, &sleep.SleepTime, &sleep.WakeTime, &sleep.Score, &sleep.EnterDate); err != nil {
 			logger.Error(ctx, "got an internal error while scanning sleep record row",
 				repo.Namespace,
 				zap.Error(err),
