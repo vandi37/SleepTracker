@@ -10,6 +10,7 @@ import (
 	"github.com/vandi37/SleepTracker/internal/repo"
 	"github.com/vandi37/SleepTracker/internal/repo/user_repo"
 	"github.com/vandi37/SleepTracker/models"
+	"github.com/vandi37/SleepTracker/pkg/date"
 	"github.com/vandi37/SleepTracker/pkg/logger"
 	"github.com/vandi37/SleepTracker/pkg/score"
 	"github.com/vandi37/SleepTracker/pkg/tokens"
@@ -47,7 +48,7 @@ func (s *Service) tokens(ctx context.Context, id int64) (models.UserWithToken, m
 	}, nil
 }
 
-func (s *Service) Register(ctx context.Context, username, nickname, password string, birth time.Time) (models.UserWithToken, models.Error) {
+func (s *Service) Register(ctx context.Context, username, nickname, password string, birth date.Date) (models.UserWithToken, models.Error) {
 	if len(password) > 72 {
 		logger.Debug(ctx, "creation of account failed, invalid password", Namespace, zap.String("username", username), zap.String("nickname", nickname))
 		return models.UserWithToken{}, models.Invalid("password", len(password))
@@ -62,7 +63,7 @@ func (s *Service) Register(ctx context.Context, username, nickname, password str
 		logger.Error(ctx, "got an internal error while beginning transaction", Namespace, zap.Error(err))
 		return models.UserWithToken{}, models.Internal(err)
 	}
-	id, rErr := s.UserRepo.Create(ctx, tx, username, nickname, password_hash, birth)
+	id, rErr := s.UserRepo.Create(ctx, tx, username, nickname, password_hash, time.Time(birth))
 	if rErr != nil {
 		tx.Rollback()
 		logger.Debug(ctx, "error creating user", Namespace, zap.Error(rErr), zap.String("username", username), zap.String("nickname", nickname))

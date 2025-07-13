@@ -1,50 +1,98 @@
 package handler
 
 import (
-	"time"
+	"encoding/json"
+	"errors"
+	"net/http"
+	"strconv"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/vandi37/SleepTracker/internal/service"
+	"github.com/vandi37/SleepTracker/models"
 )
 
-func RegisterHandler(allowed []string) *gin.Engine {
-	r := gin.New()
-	r.Use(gin.CustomRecovery(func(c *gin.Context, err any) {
+type Handler struct {
+	service *service.Service
+}
 
-	}))
-	r.Use(cors.New(cors.Config{
-		AllowOrigins:     allowed,
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"},
-		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}))
-	users := r.Group("/users")
-	users.POST("/register")
-	users.POST("/login")
-	users.POST("/refresh")
-	users.GET("/")
-	users.GET("/:id")
-	users.PUT("/")
-	users.PATCH("/password")
-	users.DELETE("/")
-	friends := r.Group("/friends")
-	friends.POST("/request")
-	friends.POST("/accept")
-	friends.GET("/")
-	friends.DELETE("/:id")
+func NewHandler(service *service.Service) *Handler {
+	return &Handler{
+		service: service,
+	}
+}
 
-	friends.GET("/:id/history/:page")
-	friends.GET("/:id/table/:page")
+func (h *Handler) Register(ctx *gin.Context) {
+	var req models.UserReq
+	if err := json.NewDecoder(ctx.Request.Body).Decode(&req); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.JsonError{
+			Status:  http.StatusBadRequest,
+			Message: "invalid request body",
+		})
+		return
+	}
+	res, err := h.service.Register(ctx.Request.Context(), req.Username, req.Nickname, req.Password, req.Birth)
+	if err != nil {
+		ctx.AbortWithStatusJSON(err.Code(), err.JsonError())
+		return
+	}
+	ctx.JSON(http.StatusOK, res)
+}
+func (h *Handler) Login(ctx *gin.Context) {
+	var req models.UserReq
+	if err := json.NewDecoder(ctx.Request.Body).Decode(&req); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.JsonError{
+			Status:  http.StatusBadRequest,
+			Message: "invalid request body",
+		})
+		return
+	}
+	res, err := h.service.Login(ctx, req.Username, req.Password)
+	if err != nil {
+		ctx.AbortWithStatusJSON(err.Code(), err.JsonError())
+		return
+	}
+	ctx.JSON(http.StatusOK, res)
+}
 
-	sleep := r.Group("/sleep")
-	sleep.POST("/sleep")
-	sleep.PUT("/:id")
-	sleep.DELETE("/:id")
-
-	r.GET("/history/:page")
-	r.GET("/table/:page")
-
-	return r
+func (h *Handler) Refresh(ctx *gin.Context) {
+	var s string
+	if err := json.NewDecoder(ctx.Request.Body).Decode(&s); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.JsonError{
+			Status:  http.StatusBadRequest,
+			Message: "invalid request body",
+		})
+		return
+	}
+	res, err := h.service.Refresh(ctx, s)
+	if err != nil {
+		ctx.AbortWithStatusJSON(err.Code(), err.JsonError())
+		return
+	}
+	ctx.JSON(http.StatusOK, res)
+}
+func (h *Handler) GetSelf(ctx *gin.Context) {
+	id := ctx.GetInt64(ID_KEY)
+	if id <= 0 {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Internal(errors.New("got no id")))
+	}
+	user, err := h.service.GetUser(ctx, id)
+	if err != nil {
+		ctx.AbortWithError(err.Code(), err.JsonError())
+		return
+	}
+	ctx.JSON(http.StatusOK, user)
+}
+func (h *Handler) GetUser(ctx *gin.Context) {
+	sid := ctx.GetString("id")
+	id, parseErr := strconv.ParseInt(sid, 10, 64)
+	if parseErr != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.Invalid("id", sid))
+		return
+	}
+	user, err := h.service.GetUser(ctx, id)
+	if err != nil {
+		ctx.AbortWithError(err.Code(), err.JsonError())
+		return
+	}
+	ctx.JSON(http.StatusOK, user)
 }

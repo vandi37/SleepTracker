@@ -2,9 +2,17 @@ package models
 
 import (
 	"time"
+
+	"github.com/vandi37/SleepTracker/pkg/date"
 )
 
 type (
+	UserReq struct {
+		Username string    `json:"username"`
+		Password string    `json:"password"`
+		Nickname string    `json:"nickname"`
+		Birth    date.Date `json:"birth"`
+	}
 	UserWithToken struct {
 		Id      int64     `json:"id"`
 		Access  string    `json:"access,omitempty"`

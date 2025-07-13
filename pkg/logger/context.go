@@ -7,10 +7,8 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-type Key string
-
 const (
-	ContextLogger Key = "logger-value"
+	ContextLogger = "logger-value"
 )
 
 func Context(ctx context.Context, l *zap.Logger) context.Context {
