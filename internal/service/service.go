@@ -375,3 +375,37 @@ func (s *Service) DeleteSleep(ctx context.Context, id, user_id int64) models.Err
 	logger.Debug(ctx, "deleted a sleep record", Namespace, zap.Int64("id", id))
 	return nil
 }
+
+func (s *Service) GetSleeps(ctx context.Context, user_id int64, page int) ([]models.Sleep, models.Error) {
+	tx, err := s.Database.BeginTx(ctx, nil)
+	if err != nil {
+		logger.Error(ctx, "got an internal error while beginning transaction", Namespace, zap.Error(err))
+		return nil, models.Internal(err)
+	}
+	fr, rErr := s.SleepRepo.Week(ctx, tx, user_id, page)
+	if rErr != nil {
+		tx.Rollback()
+		logger.Debug(ctx, "error getting sleeps", Namespace, zap.Error(rErr), zap.Int64("user_id", user_id))
+		return nil, rErr
+	}
+	tx.Commit()
+	logger.Debug(ctx, "got sleeps", Namespace, zap.Int64("user_id", user_id))
+	return fr, nil
+}
+
+func (s *Service) GetScores(ctx context.Context, user_id int64, page int) ([]models.SleepScore, models.Error) {
+	tx, err := s.Database.BeginTx(ctx, nil)
+	if err != nil {
+		logger.Error(ctx, "got an internal error while beginning transaction", Namespace, zap.Error(err))
+		return nil, models.Internal(err)
+	}
+	score, rErr := s.SleepRepo.Year(ctx, tx, user_id, page)
+	if rErr != nil {
+		tx.Rollback()
+		logger.Debug(ctx, "error getting scores", Namespace, zap.Error(rErr), zap.Int64("user_id", user_id))
+		return nil, rErr
+	}
+	tx.Commit()
+	logger.Debug(ctx, "got scores", Namespace, zap.Int64("user_id", user_id))
+	return score, nil
+}
