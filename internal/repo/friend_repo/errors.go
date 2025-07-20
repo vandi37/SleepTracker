@@ -65,4 +65,3 @@ func (f FriendshipAlreadyAccepted) JsonError() models.JsonError {
 		Context: map[string]any{"id": f},
 	}
 }
-

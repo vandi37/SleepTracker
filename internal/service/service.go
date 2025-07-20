@@ -254,7 +254,7 @@ func (s *Service) Request(ctx context.Context, user1_id, user2_id int64) (int64,
 	return id, nil
 }
 
-func (s *Service) AcceptFriendship(ctx context.Context, id, user2_id int64) models.Error {
+func (s *Service) Accept(ctx context.Context, id, user2_id int64) models.Error {
 	tx, err := s.Database.BeginTx(ctx, nil)
 	if err != nil {
 		logger.Error(ctx, "got an internal error while beginning transaction", Namespace, zap.Error(err))
@@ -303,6 +303,23 @@ func (s *Service) GetFriendships(ctx context.Context, get models.GetFriendships)
 	tx.Commit()
 	logger.Debug(ctx, "got friendships", Namespace, zap.Int64("user_id", get.UserId))
 	return fr, nil
+}
+
+func (s *Service) GetSecond(ctx context.Context, id, user_id int64) (int64, models.Error) {
+	tx, err := s.Database.BeginTx(ctx, nil)
+	if err != nil {
+		logger.Error(ctx, "got an internal error while beginning transaction", Namespace, zap.Error(err))
+		return 0, models.Internal(err)
+	}
+	second, rErr := s.FriendRepo.GetSecond(ctx, tx, id, user_id)
+	if rErr != nil {
+		tx.Rollback()
+		logger.Debug(ctx, "error getting friendships", Namespace, zap.Error(rErr), zap.Int64("user_id", user_id))
+		return 0, rErr
+	}
+	tx.Commit()
+	logger.Debug(ctx, "got friendships", Namespace, zap.Int64("user_id", user_id))
+	return second, nil
 }
 
 func (s *Service) EnterSleep(ctx context.Context, enter models.Sleep) (int64, models.Error) {

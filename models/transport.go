@@ -24,4 +24,19 @@ type (
 		Limit  int   `json:"limit"`
 		Offset int   `json:"offset"`
 	}
+	Password struct {
+		Password string `json:"password"`
+	}
+	Id struct {
+		Id int64 `json:"id"`
+	}
+	Friendships struct {
+		Friendships []Friend `json:"friendships"`
+	}
+	Sleeps struct {
+		Sleeps []Sleep `json:"sleeps"`
+	}
+	Scores struct {
+		Scores []SleepScore `json:"scores"`
+	}
 )

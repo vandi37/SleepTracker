@@ -23,6 +23,7 @@ type Friend interface {
 	Request(ctx context.Context, tx *sql.Tx, user1_id, user2_id int64) (int64, models.Error)
 	Accept(ctx context.Context, tx *sql.Tx, id, user2_id int64) models.Error
 	Delete(ctx context.Context, tx *sql.Tx, id, user_id int64) models.Error
+	GetSecond(ctx context.Context, tx *sql.Tx, id, user_id int64) (int64, models.Error)
 	Get(ctx context.Context, tx *sql.Tx, user_id int64, limit, offset int) ([]models.Friend, models.Error)
 }
 

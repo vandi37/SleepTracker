@@ -14,6 +14,28 @@ import (
 
 type Repo struct{}
 
+// GetSecond implements repo.Friend.
+func (r Repo) GetSecond(ctx context.Context, tx *sql.Tx, id, user_id int64) (int64, models.Error) {
+	var getId int64
+	err := tx.QueryRowContext(ctx, `select
+	case 
+        when user1_id = $2 then user2_id
+        when user2_id = $2 then user1_id
+    end
+	from friends
+	where id = $1 
+	and (user1_id = $2 or user2_id = $2); `, id).
+		Scan(&getId)
+	if err == sql.ErrNoRows {
+		return getId, FriendshipNotFound(id)
+	}
+	if err != nil {
+		logger.Error(ctx, "got an internal error while getting user", repo.Namespace, zap.Error(err), zap.Int64("id", id))
+		return getId, models.Internal(err)
+	}
+	return getId, nil
+}
+
 // Accept implements repo.Friend.
 func (Repo) Accept(ctx context.Context, tx *sql.Tx, id int64, user2_id int64) models.Error {
 	res, err := tx.ExecContext(ctx, `update friends set is_accepted = true, updated_at = default 
