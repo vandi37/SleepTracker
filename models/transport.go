@@ -39,4 +39,7 @@ type (
 	Scores struct {
 		Scores []SleepScore `json:"scores"`
 	}
+	Token struct {
+		Token string `json:"token"`
+	}
 )

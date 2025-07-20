@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/render"
 	"github.com/vandi37/SleepTracker/models"
 	"github.com/vandi37/SleepTracker/pkg/logger"
 	"go.uber.org/zap"
@@ -14,20 +15,20 @@ import (
 
 func RegisterHandler(allowed []string, handler *Handler, l *zap.Logger) *gin.Engine {
 	r := gin.New()
+	r.Use(AddLogger(l))
 	r.Use(gin.CustomRecovery(func(c *gin.Context, e any) {
 		err := fmt.Errorf("%v", e)
 		logger.Error(c, "got a panic in handler", zap.Error(err))
 		c.AbortWithStatusJSON(http.StatusInternalServerError, models.Internal(err))
 	}))
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     allowed,
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"},
-		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
+		AllowOrigins:  allowed,
+		AllowHeaders:  []string{"*"},
+		ExposeHeaders: []string{"*"},
+		MaxAge:        time.Hour,
 	}))
-	r.Use(AddLogger(l))
+	r.Use(Logging)
+	r.GET("/ping", func(ctx *gin.Context) { ctx.Render(http.StatusOK, render.String{Format: "pong"}) })
 	users := r.Group("/users")
 	users.POST("/register", handler.Register)
 	users.POST("/login", handler.Login)

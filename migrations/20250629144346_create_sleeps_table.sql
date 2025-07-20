@@ -1,5 +1,12 @@
 -- +goose Up
 -- +goose StatementBegin
+create or replace function immutable_date_trunc(text, date)
+returns date as $$
+begin
+    return date_trunc($1, $2);
+end;
+$$ language plpgsql IMMUTABLE;
+
 create table sleeps (
     id bigserial primary key,
     user_id bigint not null references users(id) on delete cascade,
@@ -14,8 +21,8 @@ create table sleeps (
     )
 );
 
-create index idx_user_week on sleeps (user_id, date_trunc('week', enter_date));
-create index idx_user_year on sleeps (user_id, date_trunc('year', enter_date));
+create index idx_user_week on sleeps (user_id, immutable_date_trunc('week', enter_date));
+create index idx_user_year on sleeps (user_id, immutable_date_trunc('year', enter_date));
 -- +goose StatementEnd
 
 -- +goose Down

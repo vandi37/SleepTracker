@@ -8,13 +8,12 @@ type Config struct {
 	Port       int    `env:"PORT" def:"8080"`
 	Refresh    JWT    `env:"REFRESH"`
 	Access     JWT    `env:"ACCESS"`
-	ConnString string `env:"CONN_STRING" def:"postgresql://user:password@localhost/app?sslmode=false"`
+	ConnString string `env:"CONN_STRING" def:"postgresql://user:password@localhost:5432/app?sslmode=false"`
 }
 
 type JWT struct {
-	Secret    string `env:"SECRET"`
-	Expires   string `env:"EXP" def:"24h"`
-	NotBefore string `env:"NBF" def:"1ms"`
+	Secret  string `env:"SECRET"`
+	Expires string `env:"EXP" def:"24h"`
 }
 
 func LoadConfig() (*Config, error) {

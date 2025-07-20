@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -23,7 +22,7 @@ func NewHandler(service *service.Service) *Handler {
 
 func (h *Handler) Register(ctx *gin.Context) {
 	var req models.UserReq
-	if err := json.NewDecoder(ctx.Request.Body).Decode(&req); err != nil {
+	if err := ctx.ShouldBindBodyWithJSON(&req); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.JsonError{
 			Status:  http.StatusBadRequest,
 			Message: "invalid request body",
@@ -39,7 +38,7 @@ func (h *Handler) Register(ctx *gin.Context) {
 }
 func (h *Handler) Login(ctx *gin.Context) {
 	var req models.UserReq
-	if err := json.NewDecoder(ctx.Request.Body).Decode(&req); err != nil {
+	if err := ctx.ShouldBindBodyWithJSON(&req); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.JsonError{
 			Status:  http.StatusBadRequest,
 			Message: "invalid request body",
@@ -55,15 +54,15 @@ func (h *Handler) Login(ctx *gin.Context) {
 }
 
 func (h *Handler) Refresh(ctx *gin.Context) {
-	var s string
-	if err := json.NewDecoder(ctx.Request.Body).Decode(&s); err != nil {
+	var req models.Token
+	if err := ctx.ShouldBindBodyWithJSON(&req); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.JsonError{
 			Status:  http.StatusBadRequest,
 			Message: "invalid request body",
 		})
 		return
 	}
-	res, err := h.service.Refresh(ctx, s)
+	res, err := h.service.Refresh(ctx, req.Token)
 	if err != nil {
 		ctx.AbortWithStatusJSON(err.Code(), err.JsonError())
 		return
@@ -105,7 +104,7 @@ func (h *Handler) UpdateUser(ctx *gin.Context) {
 		return
 	}
 	var req models.User
-	if err := json.NewDecoder(ctx.Request.Body).Decode(&req); err != nil {
+	if err := ctx.ShouldBindBodyWithJSON(&req); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.JsonError{
 			Status:  http.StatusBadRequest,
 			Message: "invalid request body",
@@ -127,7 +126,7 @@ func (h *Handler) UpdatePassword(ctx *gin.Context) {
 		return
 	}
 	var req models.Password
-	if err := json.NewDecoder(ctx.Request.Body).Decode(&req); err != nil {
+	if err := ctx.ShouldBindBodyWithJSON(&req); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.JsonError{
 			Status:  http.StatusBadRequest,
 			Message: "invalid request body",
@@ -161,7 +160,7 @@ func (h *Handler) Request(ctx *gin.Context) {
 		return
 	}
 	var req models.Id
-	if err := json.NewDecoder(ctx.Request.Body).Decode(&req); err != nil {
+	if err := ctx.ShouldBindBodyWithJSON(&req); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.JsonError{
 			Status:  http.StatusBadRequest,
 			Message: "invalid request body",
@@ -183,7 +182,7 @@ func (h *Handler) Accept(ctx *gin.Context) {
 		return
 	}
 	var req models.Id
-	if err := json.NewDecoder(ctx.Request.Body).Decode(&req); err != nil {
+	if err := ctx.ShouldBindBodyWithJSON(&req); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.JsonError{
 			Status:  http.StatusBadRequest,
 			Message: "invalid request body",
@@ -204,10 +203,10 @@ func (h *Handler) GetFriendships(ctx *gin.Context) {
 		return
 	}
 	var req models.GetFriendships
-	if err := json.NewDecoder(ctx.Request.Body).Decode(&req); err != nil {
+	if err := ctx.ShouldBindQuery(&req); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.JsonError{
 			Status:  http.StatusBadRequest,
-			Message: "invalid request body",
+			Message: "invalid query parameters",
 		})
 		return
 	}
@@ -246,7 +245,7 @@ func (h *Handler) EnterSleep(ctx *gin.Context) {
 		return
 	}
 	var req models.Sleep
-	if err := json.NewDecoder(ctx.Request.Body).Decode(&req); err != nil {
+	if err := ctx.ShouldBindBodyWithJSON(&req); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.JsonError{
 			Status:  http.StatusBadRequest,
 			Message: "invalid request body",
@@ -269,7 +268,7 @@ func (h *Handler) UpdateSleep(ctx *gin.Context) {
 		return
 	}
 	var req models.Sleep
-	if err := json.NewDecoder(ctx.Request.Body).Decode(&req); err != nil {
+	if err := ctx.ShouldBindBodyWithJSON(&req); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.JsonError{
 			Status:  http.StatusBadRequest,
 			Message: "invalid request body",

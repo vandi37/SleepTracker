@@ -94,9 +94,9 @@ func (Repo) Update(ctx context.Context, tx *sql.Tx, id, user_id int64, sleep_tim
 func (Repo) Week(ctx context.Context, tx *sql.Tx, user_id int64, page int) ([]models.Sleep, models.Error) {
 	rows, err := tx.QueryContext(ctx, `select id, user_id, sleep_time, wake_time, score, enter_date from sleeps where 
   		user_id = $1 and enter_date between 
-    	(date_trunc('week', current_date) - interval '$2 weeks') 
+    	(immutable_date_trunc('week', current_date) - interval '$2 weeks') 
     	and 
-    	(date_trunc('week', current_date) - interval '$2 weeks' + interval '6 days') order by enter_date desc`, user_id, page)
+    	(immutable_date_trunc('week', current_date) - interval '$2 weeks' + interval '6 days') order by enter_date desc`, user_id, page)
 	if err != nil {
 		logger.Error(ctx, "got an internal error while getting week stats", repo.Namespace, zap.Error(err), zap.Int64("user_id", user_id))
 		return nil, models.Internal(err)
@@ -128,9 +128,9 @@ func (Repo) Week(ctx context.Context, tx *sql.Tx, user_id int64, page int) ([]mo
 func (Repo) Year(ctx context.Context, tx *sql.Tx, user_id int64, page int) ([]models.SleepScore, models.Error) {
 	rows, err := tx.QueryContext(ctx, `select score, enter_date from sleeps where 
   		user_id = $1 and enter_date between 
-    	(date_trunc('year', current_date) - interval '$2 years') 
+    	(immutable_date_trunc('year', current_date) - interval '$2 years') 
 		and
-    	(date_trunc('year', current_date) - interval '$2 years' + interval '1 year' - interval '1 day')  order by enter_date desc`, user_id, page)
+    	(immutable_date_trunc('year', current_date) - interval '$2 years' + interval '1 year' - interval '1 day')  order by enter_date desc`, user_id, page)
 	if err != nil {
 		logger.Error(ctx, "got an internal error while getting week stats", repo.Namespace, zap.Error(err), zap.Int64("user_id", user_id))
 		return nil, models.Internal(err)

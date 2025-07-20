@@ -5,8 +5,8 @@ create table friends (
     user1_id bigint not null references users(id) on delete cascade,
     user2_id bigint not null references users(id) on delete cascade,
     is_accepted boolean not null default false,
-    created_at timestamp default current_timestamp,
-    updated_at timestamp default current_timestamp,
+    created_at timestamptz default current_timestamp,
+    updated_at timestamptz default current_timestamp,
     constraint unique_friendship unique (user1_id, user2_id),
     constraint no_self_friendship check (user1_id != user2_id)
 );

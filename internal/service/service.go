@@ -123,18 +123,7 @@ func (s *Service) Refresh(ctx context.Context, refresh string) (models.UserWithT
 		logger.Debug(ctx, "got an invalid refresh token with a non int subject", Namespace)
 		return models.UserWithToken{}, models.Invalid("id", strId)
 	}
-	expires := time.Now().Add(-s.AccessJwt.GetExpiration())
-	access, err := s.AccessJwt.Generate(strconv.FormatInt(id, 16))
-	if err != nil {
-		logger.Error(ctx, "got an internal error while generating access token", Namespace, zap.Error(err), zap.Int64("id", id))
-		return models.UserWithToken{}, models.Internal(err)
-	}
-	logger.Debug(ctx, "refreshed a token", Namespace, zap.Int64("id", id))
-	return models.UserWithToken{
-		Id:      id,
-		Expires: expires,
-		Access:  access,
-	}, nil
+	return s.tokens(ctx, id)
 }
 
 func (s *Service) Valid(ctx context.Context, access string) (int64, models.Error) {

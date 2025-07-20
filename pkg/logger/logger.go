@@ -49,19 +49,19 @@ func Prod(writer zapcore.WriteSyncer) zapcore.Core {
 	)
 }
 
-func ProdFile(name string) (zapcore.Core, error) {
+func ProdFile(name string) (zapcore.Core, *os.File, error) {
 	file, err := os.OpenFile(name, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return Prod(file), err
+	return Prod(file), file, err
 }
 
-func ConsoleAndFile(name string) *zap.Logger {
+func ConsoleAndFile(name string) (*zap.Logger, *os.File) {
 	console := Setup()
-	file, err := ProdFile(name)
+	fileLogger, file, err := ProdFile(name)
 	if err != nil {
 		zap.New(console, zap.AddStacktrace(zap.ErrorLevel)).Fatal("can't load logging file", zap.String("name", name))
 	}
-	return zap.New(zapcore.NewTee(console, file), zap.AddStacktrace(zap.ErrorLevel))
+	return zap.New(zapcore.NewTee(console, fileLogger), zap.AddStacktrace(zap.ErrorLevel)), file
 }

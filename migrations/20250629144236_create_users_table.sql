@@ -6,7 +6,7 @@ create table users (
     nickname text not null,
     password_hash bytea not null,
     birth date not null,
-    created_at timestamp default current_timestamp
+    created_at timestamptz default current_timestamp
 );
 -- +goose StatementEnd
 
