@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -72,7 +71,7 @@ func (h *Handler) Refresh(ctx *gin.Context) {
 func (h *Handler) GetSelf(ctx *gin.Context) {
 	id := ctx.GetInt64(ID_KEY)
 	if id <= 0 {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Internal(errors.New("got no id")))
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Invalid("auth", id))
 		return
 	}
 	user, err := h.service.GetUser(ctx, id)
@@ -83,10 +82,10 @@ func (h *Handler) GetSelf(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, user)
 }
 func (h *Handler) GetUser(ctx *gin.Context) {
-	sid := ctx.GetString("id")
+	sid := ctx.Param("id")
 	id, parseErr := strconv.ParseInt(sid, 10, 64)
 	if parseErr != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.Invalid("id", sid))
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.Invalid("id", sid).JsonError())
 		return
 	}
 	user, err := h.service.GetUser(ctx, id)
@@ -100,7 +99,7 @@ func (h *Handler) GetUser(ctx *gin.Context) {
 func (h *Handler) UpdateUser(ctx *gin.Context) {
 	id := ctx.GetInt64(ID_KEY)
 	if id <= 0 {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Internal(errors.New("got no id")))
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Invalid("auth", id))
 		return
 	}
 	var req models.User
@@ -122,7 +121,7 @@ func (h *Handler) UpdateUser(ctx *gin.Context) {
 func (h *Handler) UpdatePassword(ctx *gin.Context) {
 	id := ctx.GetInt64(ID_KEY)
 	if id <= 0 {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Internal(errors.New("got no id")))
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Invalid("auth", id))
 		return
 	}
 	var req models.Password
@@ -143,7 +142,7 @@ func (h *Handler) UpdatePassword(ctx *gin.Context) {
 func (h *Handler) DeleteUser(ctx *gin.Context) {
 	id := ctx.GetInt64(ID_KEY)
 	if id <= 0 {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Internal(errors.New("got no id")))
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Invalid("auth", id))
 		return
 	}
 	if err := h.service.DeleteUser(ctx, id); err != nil {
@@ -156,7 +155,7 @@ func (h *Handler) DeleteUser(ctx *gin.Context) {
 func (h *Handler) Request(ctx *gin.Context) {
 	id := ctx.GetInt64(ID_KEY)
 	if id <= 0 {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Internal(errors.New("got no id")))
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Invalid("auth", id))
 		return
 	}
 	var req models.Id
@@ -178,7 +177,7 @@ func (h *Handler) Request(ctx *gin.Context) {
 func (h *Handler) Accept(ctx *gin.Context) {
 	id := ctx.GetInt64(ID_KEY)
 	if id <= 0 {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Internal(errors.New("got no id")))
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Invalid("auth", id))
 		return
 	}
 	var req models.Id
@@ -199,7 +198,7 @@ func (h *Handler) Accept(ctx *gin.Context) {
 func (h *Handler) GetFriendships(ctx *gin.Context) {
 	id := ctx.GetInt64(ID_KEY)
 	if id <= 0 {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Internal(errors.New("got no id")))
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Invalid("auth", id))
 		return
 	}
 	var req models.GetFriendships
@@ -222,13 +221,13 @@ func (h *Handler) GetFriendships(ctx *gin.Context) {
 func (h *Handler) DeleteFriendship(ctx *gin.Context) {
 	id := ctx.GetInt64(ID_KEY)
 	if id <= 0 {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Internal(errors.New("got no id")))
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Invalid("auth", id))
 		return
 	}
-	sid := ctx.GetString("id")
+	sid := ctx.Param("id")
 	friendshipId, parseErr := strconv.ParseInt(sid, 10, 64)
 	if parseErr != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.Invalid("id", sid))
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.Invalid("id", sid).JsonError())
 		return
 	}
 	if err := h.service.DeleteFriendship(ctx, friendshipId, id); err != nil {
@@ -241,7 +240,7 @@ func (h *Handler) DeleteFriendship(ctx *gin.Context) {
 func (h *Handler) EnterSleep(ctx *gin.Context) {
 	id := ctx.GetInt64(ID_KEY)
 	if id <= 0 {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Internal(errors.New("got no id")))
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Invalid("auth", id))
 		return
 	}
 	var req models.Sleep
@@ -264,7 +263,7 @@ func (h *Handler) EnterSleep(ctx *gin.Context) {
 func (h *Handler) UpdateSleep(ctx *gin.Context) {
 	id := ctx.GetInt64(ID_KEY)
 	if id <= 0 {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Internal(errors.New("got no id")))
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Invalid("auth", id))
 		return
 	}
 	var req models.Sleep
@@ -286,13 +285,13 @@ func (h *Handler) UpdateSleep(ctx *gin.Context) {
 func (h *Handler) DeleteSleep(ctx *gin.Context) {
 	id := ctx.GetInt64(ID_KEY)
 	if id <= 0 {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Internal(errors.New("got no id")))
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Invalid("auth", id))
 		return
 	}
-	sid := ctx.GetString("id")
+	sid := ctx.Param("id")
 	sleepId, parseErr := strconv.ParseInt(sid, 10, 64)
 	if parseErr != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.Invalid("id", sid))
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.Invalid("id", sid).JsonError())
 		return
 	}
 	if err := h.service.DeleteSleep(ctx, sleepId, id); err != nil {
@@ -305,13 +304,13 @@ func (h *Handler) DeleteSleep(ctx *gin.Context) {
 func (h *Handler) GetSleeps(ctx *gin.Context) {
 	id := ctx.GetInt64(ID_KEY)
 	if id <= 0 {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Internal(errors.New("got no id")))
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Invalid("auth", id))
 		return
 	}
-	sPage := ctx.GetString("page")
+	sPage := ctx.Param("page")
 	page, parseErr := strconv.Atoi(sPage)
 	if parseErr != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.Invalid("page", page))
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.Invalid("page", page).JsonError())
 		return
 	}
 	sleeps, err := h.service.GetSleeps(ctx, id, page)
@@ -325,13 +324,13 @@ func (h *Handler) GetSleeps(ctx *gin.Context) {
 func (h *Handler) GetScores(ctx *gin.Context) {
 	id := ctx.GetInt64(ID_KEY)
 	if id <= 0 {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Internal(errors.New("got no id")))
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Invalid("auth", id))
 		return
 	}
-	sPage := ctx.GetString("page")
+	sPage := ctx.Param("page")
 	page, parseErr := strconv.Atoi(sPage)
 	if parseErr != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.Invalid("page", page))
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.Invalid("page", page).JsonError())
 		return
 	}
 	scores, err := h.service.GetScores(ctx, id, page)
@@ -345,19 +344,19 @@ func (h *Handler) GetScores(ctx *gin.Context) {
 func (h *Handler) GetFriendSleeps(ctx *gin.Context) {
 	id := ctx.GetInt64(ID_KEY)
 	if id <= 0 {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Internal(errors.New("got no id")))
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Invalid("auth", id))
 		return
 	}
-	sid := ctx.GetString("id")
+	sid := ctx.Param("id")
 	friendshipId, parseErr := strconv.ParseInt(sid, 10, 64)
 	if parseErr != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.Invalid("id", sid))
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.Invalid("id", sid).JsonError())
 		return
 	}
-	sPage := ctx.GetString("page")
+	sPage := ctx.Param("page")
 	page, parseErr := strconv.Atoi(sPage)
 	if parseErr != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.Invalid("page", page))
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.Invalid("page", page).JsonError())
 		return
 	}
 	second, err := h.service.GetSecond(ctx, friendshipId, id)
@@ -375,19 +374,19 @@ func (h *Handler) GetFriendSleeps(ctx *gin.Context) {
 func (h *Handler) GetFriendScores(ctx *gin.Context) {
 	id := ctx.GetInt64(ID_KEY)
 	if id <= 0 {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Internal(errors.New("got no id")))
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, models.Invalid("auth", id))
 		return
 	}
-	sid := ctx.GetString("id")
+	sid := ctx.Param("id")
 	friendshipId, parseErr := strconv.ParseInt(sid, 10, 64)
 	if parseErr != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.Invalid("id", sid))
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.Invalid("id", sid).JsonError())
 		return
 	}
-	sPage := ctx.GetString("page")
+	sPage := ctx.Param("page")
 	page, parseErr := strconv.Atoi(sPage)
 	if parseErr != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.Invalid("page", page))
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, models.Invalid("page", page).JsonError())
 		return
 	}
 	second, err := h.service.GetSecond(ctx, friendshipId, id)

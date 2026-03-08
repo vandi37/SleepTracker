@@ -20,9 +20,9 @@ type (
 		Refresh string    `json:"refresh,omitempty"`
 	}
 	GetFriendships struct {
-		UserId int64 `json:"user_id"`
-		Limit  int   `json:"limit"`
-		Offset int   `json:"offset"`
+		UserId int64
+		Limit  int `form:"limit" binding:"min=1"`
+		Offset int `form:"offset" binding:"min=0"`
 	}
 	Password struct {
 		Password string `json:"password"`

@@ -15,7 +15,7 @@ import (
 type Repo struct{}
 
 // GetBirth implements repo.User.
-func (r Repo) GetBirth(ctx context.Context, tx *sql.Tx, id int64) (time.Time, models.Error) {
+func (Repo) GetBirth(ctx context.Context, tx *sql.Tx, id int64) (time.Time, models.Error) {
 	var time time.Time
 	err := tx.QueryRowContext(ctx, `select birth from users where id = $1`, id).
 		Scan(&time)
@@ -116,7 +116,7 @@ func (Repo) Update(ctx context.Context, tx *sql.Tx, id int64, username string, n
 	if nickname == "" {
 		return models.Invalid("nickname", nickname)
 	}
-	res, err := tx.ExecContext(ctx, `update users set username = $2 nickname = $3, birth = $ where id = $1`, id, username, nickname, birth)
+	res, err := tx.ExecContext(ctx, `update users set username = $2, nickname = $3, birth = $4 where id = $1`, id, username, nickname, birth)
 	if err, ok := err.(*pq.Error); ok && err.Code == "23505" {
 		return UsernameTakenError(username)
 	} else if err != nil {
