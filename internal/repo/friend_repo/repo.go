@@ -24,7 +24,7 @@ func (r Repo) GetSecond(ctx context.Context, tx *sql.Tx, id, user_id int64) (int
     end
 	from friends
 	where id = $1 
-	and (user1_id = $2 or user2_id = $2); `, id).
+	and (user1_id = $2 or user2_id = $2)`, id, user_id).
 		Scan(&getId)
 	if err == sql.ErrNoRows {
 		return getId, FriendshipNotFound(id)

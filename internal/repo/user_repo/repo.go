@@ -96,7 +96,7 @@ func (Repo) Get(ctx context.Context, tx *sql.Tx, id int64) (models.User, models.
 func (Repo) GetByUsername(ctx context.Context, tx *sql.Tx, username string) (int64, []byte, models.Error) {
 	var id int64
 	var passwordHash []byte
-	err := tx.QueryRowContext(ctx, `select id, password_hash, from users where username = $1`, username).
+	err := tx.QueryRowContext(ctx, `select id, password_hash from users where username = $1`, username).
 		Scan(&id, &passwordHash)
 	if err == sql.ErrNoRows {
 		return id, passwordHash, InvalidCredentials{}
@@ -117,9 +117,10 @@ func (Repo) Update(ctx context.Context, tx *sql.Tx, id int64, username string, n
 		return models.Invalid("nickname", nickname)
 	}
 	res, err := tx.ExecContext(ctx, `update users set username = $2, nickname = $3, birth = $4 where id = $1`, id, username, nickname, birth)
-	if err, ok := err.(*pq.Error); ok && err.Code == "23505" {
+	if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == "23505" {
 		return UsernameTakenError(username)
-	} else if err != nil {
+	}
+	if err != nil {
 		logger.Error(ctx, "got an internal error while updating user",
 			repo.Namespace,
 			zap.Error(err),

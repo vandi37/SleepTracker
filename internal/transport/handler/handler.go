@@ -76,7 +76,7 @@ func (h *Handler) GetSelf(ctx *gin.Context) {
 	}
 	user, err := h.service.GetUser(ctx, id)
 	if err != nil {
-		ctx.AbortWithError(err.Code(), err.JsonError())
+		ctx.AbortWithStatusJSON(err.Code(), err.JsonError())
 		return
 	}
 	ctx.JSON(http.StatusOK, user)
@@ -90,7 +90,7 @@ func (h *Handler) GetUser(ctx *gin.Context) {
 	}
 	user, err := h.service.GetUser(ctx, id)
 	if err != nil {
-		ctx.AbortWithError(err.Code(), err.JsonError())
+		ctx.AbortWithStatusJSON(err.Code(), err.JsonError())
 		return
 	}
 	ctx.JSON(http.StatusOK, user)

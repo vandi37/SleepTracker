@@ -29,7 +29,7 @@ type Service struct {
 var Namespace = zap.Namespace("service")
 
 func (s *Service) tokens(ctx context.Context, id int64) (models.UserWithToken, models.Error) {
-	expires := time.Now().Add(-s.AccessJwt.GetExpiration())
+	expires := time.Now().Add(s.AccessJwt.GetExpiration())
 	access, err := s.AccessJwt.Generate(strconv.FormatInt(id, 16))
 	if err != nil {
 		logger.Error(ctx, "got an internal error while generating access token", Namespace, zap.Error(err), zap.Int64("id", id))

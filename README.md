@@ -45,7 +45,7 @@ go run ./cmd/tracker/main.go
 # Create .env with required secrets:
 # REFRESH_SECRET=...
 # ACCESS_SECRET=...
-# Optional: POSTGRES_USER, POSTGRES_PASSWORD, PORT, LOG_PATH
+# Optional: POSTGRES_USER, POSTGRES_PASSWORD, PORT, LOG_PATH, FRONTEND_PORT
 
 docker-compose up
 ```
@@ -54,7 +54,11 @@ This starts:
 
 1. PostgreSQL on port 5432
 2. Goose migrations
-3. App on `PORT` (default 8080)
+3. Go API (internal, no direct port)
+4. Vue.js frontend with nginx on port 80 (or `FRONTEND_PORT`)
+
+- **Frontend**: `http://localhost` — serves the Vue SPA
+- **API**: `http://localhost/api/...` — proxied to the Go backend (e.g. `/api/login`, `/api/users/`)
 
 ## Configuration
 
@@ -97,10 +101,33 @@ Protected routes require `Authorization: Bearer <access_token>`.
 
 See [docs/API.md](docs/API.md) for detailed request/response formats.
 
+## Frontend (Vue 3 + TypeScript)
+
+The frontend lives in `frontend/`:
+
+```bash
+cd frontend
+npm install
+npm run dev    # dev server with API proxy to localhost:8080
+npm run build  # production build → dist/
+```
+
+In development, Vite proxies `/api/*` to `http://localhost:8080/*` so you can run the API and frontend separately.
+
+**Single port (local nginx):**
+
+```bash
+cd frontend && npm run build
+PORT=8081 go run ./cmd/tracker/main.go &  # backend on 8081
+nginx -c nginx.conf -p .                   # frontend + /api proxy on 8080
+# Open http://localhost:8080
+```
+
 ## Project Structure
 
 ```
 SleepTracker/
+├── frontend/          # Vue 3 + TypeScript + Vite
 ├── cmd/tracker/       # Entry point
 ├── internal/          # Application code
 │   ├── app/           # Bootstrap
